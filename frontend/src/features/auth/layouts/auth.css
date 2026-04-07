@@ -1,0 +1,288 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap");
+
+.saas-auth-page {
+  min-height: 100vh;
+  background: linear-gradient(130deg, #eef2ff 0%, #f8fafc 100%);
+  font-family: "Inter", "Poppins", sans-serif;
+  padding: 18px;
+}
+
+.saas-auth-shell {
+  width: min(1200px, 100%);
+  min-height: calc(100vh - 36px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.16);
+}
+
+.saas-auth-visual {
+  position: relative;
+  min-height: 560px;
+  background-image: url("https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=80");
+  background-size: cover;
+  background-position: center;
+  display: grid;
+  place-items: center;
+}
+
+.saas-auth-visual-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.saas-auth-visual-content {
+  position: relative;
+  z-index: 1;
+  width: min(86%, 520px);
+  display: grid;
+  gap: 20px;
+}
+
+.saas-auth-type {
+  margin: 0;
+  color: #ffffff;
+  font-family: "Poppins", "Inter", sans-serif;
+  font-weight: 600;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  letter-spacing: 0.015em;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid rgba(255, 255, 255, 0.9);
+  width: 0;
+  opacity: 0;
+}
+
+.saas-auth-type-1 {
+  animation: typeReveal 10s steps(32, end) infinite;
+}
+
+.saas-auth-type-2 {
+  animation: typeReveal 10s steps(30, end) 3.3s infinite;
+}
+
+.saas-auth-type-3 {
+  animation: typeReveal 10s steps(34, end) 6.6s infinite;
+}
+
+.saas-auth-form-pane {
+  background: #f8fafc;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+}
+
+.saas-auth-card {
+  width: min(100%, 420px);
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+  padding: 34px;
+  animation: authCardIn 0.45s ease;
+}
+
+.saas-auth-header {
+  margin-bottom: 22px;
+  text-align: left;
+}
+
+.saas-auth-header h1 {
+  margin: 0;
+  color: #0f172a;
+  font-family: "Poppins", "Inter", sans-serif;
+  font-size: 1.72rem;
+  font-weight: 700;
+}
+
+.saas-auth-header p {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+
+.saas-auth-form {
+  display: grid;
+  gap: 15px;
+}
+
+.saas-auth-field {
+  display: grid;
+  gap: 7px;
+}
+
+.saas-auth-label {
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.saas-auth-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #f9fafb;
+  color: #111;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.saas-auth-input::placeholder {
+  color: #94a3b8;
+}
+
+.saas-auth-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+  background: #ffffff;
+}
+
+.saas-auth-input-error {
+  border-color: #ef4444;
+}
+
+.saas-auth-error {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #dc2626;
+}
+
+.saas-auth-success {
+  margin: 0;
+  border: 1px solid #bae6fd;
+  background: #f0f9ff;
+  border-radius: 8px;
+  color: #0369a1;
+  font-size: 0.85rem;
+  padding: 10px 12px;
+}
+
+.saas-auth-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.saas-auth-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.94);
+  box-shadow: 0 10px 22px rgba(102, 126, 234, 0.36);
+}
+
+.saas-auth-btn:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.saas-auth-links-row {
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.saas-auth-footer {
+  margin-top: 22px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.auth-link {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+@keyframes typeReveal {
+  0% {
+    width: 0;
+    opacity: 1;
+  }
+  25% {
+    width: 100%;
+    opacity: 1;
+  }
+  35% {
+    width: 100%;
+    opacity: 1;
+  }
+  50% {
+    width: 0;
+    opacity: 0;
+  }
+  100% {
+    width: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes authCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 960px) {
+  .saas-auth-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .saas-auth-visual {
+    min-height: 260px;
+  }
+
+  .saas-auth-form-pane {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 520px) {
+  .saas-auth-page {
+    padding: 10px;
+  }
+
+  .saas-auth-card {
+    padding: 26px;
+  }
+
+  .saas-auth-header h1 {
+    font-size: 1.45rem;
+  }
+
+  .saas-auth-footer {
+    flex-direction: column;
+  }
+}
