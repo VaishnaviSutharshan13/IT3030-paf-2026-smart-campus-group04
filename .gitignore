@@ -46,3 +46,4 @@ backend/.mvn/wrapper/maven-wrapper.jar
 *.tmp
 *.swp
 *.pid
+.tools/
