@@ -1,0 +1,17 @@
+# Maven build output
+target/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Spring Boot config overrides
+application-local.properties
