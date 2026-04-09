@@ -11,6 +11,11 @@
 - Commit Author: Gowsikan27
 - Suggested Commit Message: docs(member1): add contribution ownership and submission plan details
 
+## Project Allocation (Current Phase)
+- Member 1 Share: 25%
+- Combined Share (Member 1 + Member 2 + Member 3): 75%
+- Pending Share for Member 4: 25%
+
 ## Step-by-Step Plan
 1. Move to project root.
 2. Confirm branch exists locally or in origin.
