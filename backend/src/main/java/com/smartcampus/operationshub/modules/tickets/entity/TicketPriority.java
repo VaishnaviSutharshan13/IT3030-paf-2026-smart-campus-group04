@@ -22,7 +22,7 @@ public class TicketPriority {
     private String displayName;
 
     @Column(name = "sort_order", nullable = false)
-    private short sortOrder;
+    private byte sortOrder;
 
     public Long getId() {
         return id;
@@ -36,7 +36,7 @@ public class TicketPriority {
         return displayName;
     }
 
-    public short getSortOrder() {
+    public byte getSortOrder() {
         return sortOrder;
     }
 }
