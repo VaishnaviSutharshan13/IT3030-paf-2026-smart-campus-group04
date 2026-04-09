@@ -23,6 +23,11 @@
 7. Install dependencies and run backend/frontend to confirm independent execution.
 8. Zip member2 folder for submission.
 
+## Project Allocation (Current Phase)
+- Member 2 Share: 25%
+- Combined Share (Member 1 + Member 2 + Member 3): 75%
+- Pending Share for Member 4: 25%
+
 ## Commands
 ```bash
 cd /home/senzmatepc7/Desktop/IT3030-paf-2026-smart-campus-group04
