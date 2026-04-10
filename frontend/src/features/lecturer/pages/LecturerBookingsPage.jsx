@@ -7,10 +7,10 @@ import {
   getBookingSchedule,
   getBookings,
 } from "../../bookings/services/bookingApi";
+import { fetchResources } from "../../resources/services/resourceService";
 import {
   DEPARTMENT_COURSES,
   FLOORS,
-  getRoomsByFloorAndType,
   getRoomTypesByFloor,
 } from "../../bookings/constants/universityBookingData";
 import { useToast } from "../../../shared/components/feedback/ToastProvider";
@@ -22,8 +22,8 @@ const initialForm = {
   department: "IT",
   course: "",
   date: "",
-  startTime: "",
-  endTime: "",
+  startTime: "08:00",
+  endTime: "10:00",
   purpose: "",
   notes: "",
 };
@@ -90,16 +90,155 @@ function formatTimeLabel(time) {
   return `${hour12}:${String(mm).padStart(2, "0")} ${suffix}`;
 }
 
+function toTimeString(minutes) {
+  const hh = String(Math.floor(minutes / 60)).padStart(2, "0");
+  const mm = String(minutes % 60).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
+function mergeBookedRanges(slots) {
+  const normalized = (slots || [])
+    .map((slot) => ({
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      start: toMinutes(slot.startTime),
+      end: toMinutes(slot.endTime),
+    }))
+    .filter((slot) => Number.isFinite(slot.start) && Number.isFinite(slot.end) && slot.end > slot.start)
+    .sort((a, b) => a.start - b.start);
+
+  if (normalized.length === 0) {
+    return [];
+  }
+
+  const merged = [normalized[0]];
+  for (let index = 1; index < normalized.length; index += 1) {
+    const current = normalized[index];
+    const last = merged[merged.length - 1];
+
+    if (current.start <= last.end) {
+      last.end = Math.max(last.end, current.end);
+      last.endTime = toTimeString(last.end);
+    } else {
+      merged.push(current);
+    }
+  }
+
+  return merged.map((slot, index) => ({
+    id: `booked-range-${index}-${slot.start}-${slot.end}`,
+    startTime: toTimeString(slot.start),
+    endTime: toTimeString(slot.end),
+  }));
+}
+
+function calculateAvailableRanges(bookedRanges, workdayStart = 8 * 60, workdayEnd = 20 * 60) {
+  const ranges = [];
+  let cursor = workdayStart;
+
+  for (const slot of bookedRanges) {
+    const start = toMinutes(slot.startTime);
+    const end = toMinutes(slot.endTime);
+
+    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+      continue;
+    }
+
+    if (start > cursor) {
+      ranges.push({ startTime: toTimeString(cursor), endTime: toTimeString(start) });
+    }
+
+    cursor = Math.max(cursor, end);
+  }
+
+  if (cursor < workdayEnd) {
+    ranges.push({ startTime: toTimeString(cursor), endTime: toTimeString(workdayEnd) });
+  }
+
+  return ranges;
+}
+
+function buildTimeBreakdown(bookedRanges, availableRanges) {
+  return [
+    ...(bookedRanges || []).map((slot, index) => ({
+      id: `timeline-booked-${index}-${slot.startTime}-${slot.endTime}`,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      kind: "booked",
+    })),
+    ...(availableRanges || []).map((slot, index) => ({
+      id: `timeline-free-${index}-${slot.startTime}-${slot.endTime}`,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      kind: "available",
+    })),
+  ].sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
+}
+
+function deriveFloorLabel(resource) {
+  const code = String(resource?.code || "");
+  const location = String(resource?.location || "");
+  const locationMatch = location.match(/(?:floor|level)\s*(\d+)/i);
+  const codeMatch = code.match(/(\d)/);
+  const level = locationMatch?.[1] || codeMatch?.[1];
+  return level ? `Floor ${level}` : "Floor 1";
+}
+
+function deriveRoomTypeLabel(resource) {
+  const typeCode = String(resource?.typeCode || "").toUpperCase();
+  if (typeCode === "LAB") return "Lab";
+  if (typeCode === "EQUIP") return "Smart Classroom";
+  if (typeCode === "ROOM") return "Lecture Hall";
+  return "Classroom";
+}
+
+function normalizeResourceRows(resourcesResponse) {
+  if (Array.isArray(resourcesResponse)) return resourcesResponse;
+  if (Array.isArray(resourcesResponse?.items)) return resourcesResponse.items;
+  if (Array.isArray(resourcesResponse?.content)) return resourcesResponse.content;
+  return [];
+}
+
+function generateAutoRoomNumber(floor, roomType) {
+  const floorNo = String(floor || "").match(/\d+/)?.[0] || "1";
+  const prefixMap = {
+    "Lecture Hall": "LH",
+    "Smart Classroom": "SC",
+    Classroom: "CR",
+    Lab: "LAB",
+  };
+
+  const prefix = prefixMap[roomType] || "CR";
+  return `${prefix}${floorNo}01`;
+}
+
+function normalizeRoomCode(value) {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+}
+
+function buildRoomAliases(code) {
+  const aliases = new Set([normalizeRoomCode(code)]);
+  const upper = String(code || "").toUpperCase();
+  const labBMatch = upper.match(/^LAB[-_ ]?B(\d)$/);
+  if (labBMatch) {
+    aliases.add(normalizeRoomCode(`LAB10${labBMatch[1]}`));
+  }
+  return aliases;
+}
+
 export default function LecturerBookingsPage() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [bookings, setBookings] = useState([]);
+  const [resourceCatalog, setResourceCatalog] = useState([]);
+  const [resourceCatalogLoading, setResourceCatalogLoading] = useState(false);
   const [scheduleBookings, setScheduleBookings] = useState([]);
-  const [availableSlots, setAvailableSlots] = useState([]);
   const [bookedSlots, setBookedSlots] = useState([]);
-  const [suggestedSlot, setSuggestedSlot] = useState(null);
+  const [availabilityChecked, setAvailabilityChecked] = useState(false);
+  const [selectedCriteriaLabel, setSelectedCriteriaLabel] = useState("");
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [statusFilter, setStatusFilter] = useState("All");
@@ -136,6 +275,25 @@ export default function LecturerBookingsPage() {
       ? "Selected time slot is already booked. Please choose another time."
       : "";
 
+  const bookedRanges = useMemo(() => mergeBookedRanges(bookedSlots), [bookedSlots]);
+  const availableRanges = useMemo(() => calculateAvailableRanges(bookedRanges), [bookedRanges]);
+  const timeBreakdown = useMemo(
+    () => buildTimeBreakdown(bookedRanges, availableRanges),
+    [bookedRanges, availableRanges]
+  );
+
+  const floorOptions = FLOORS;
+
+  const resourceLookupByAlias = useMemo(() => {
+    const lookup = new Map();
+    for (const resource of resourceCatalog) {
+      for (const alias of buildRoomAliases(resource.roomNumber)) {
+        lookup.set(alias, resource);
+      }
+    }
+    return lookup;
+  }, [resourceCatalog]);
+
   const hasRequiredValues =
     Boolean(form.floor) &&
     Boolean(form.roomType) &&
@@ -156,7 +314,11 @@ export default function LecturerBookingsPage() {
     !overlapError;
 
   const roomTypeOptions = useMemo(() => getRoomTypesByFloor(form.floor), [form.floor]);
-  const roomNumberOptions = useMemo(() => getRoomsByFloorAndType(form.floor, form.roomType), [form.floor, form.roomType]);
+
+  const selectedResource = useMemo(
+    () => resourceLookupByAlias.get(normalizeRoomCode(form.roomNumber)) || null,
+    [resourceLookupByAlias, form.roomNumber]
+  );
   const courseOptions = useMemo(() => DEPARTMENT_COURSES[form.department] || [], [form.department]);
 
   const filteredBookings = useMemo(() => {
@@ -196,25 +358,62 @@ export default function LecturerBookingsPage() {
   }, []);
 
   useEffect(() => {
-    if (!form.floor && FLOORS.length > 0) {
-      setForm((prev) => ({ ...prev, floor: FLOORS[0] }));
+    let cancelled = false;
+
+    async function loadResourceCatalog() {
+      setResourceCatalogLoading(true);
+      try {
+        const resourcesResponse = await fetchResources();
+        const resources = normalizeResourceRows(resourcesResponse)
+          .filter((resource) => resource && resource.id != null)
+          .map((resource) => ({
+            id: resource.id,
+            roomNumber: resource.code || `Resource-${resource.id}`,
+            floor: deriveFloorLabel(resource),
+            roomType: deriveRoomTypeLabel(resource),
+          }));
+
+        if (!cancelled) {
+          setResourceCatalog(resources);
+        }
+      } catch {
+        if (!cancelled) {
+          setResourceCatalog([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setResourceCatalogLoading(false);
+        }
+      }
     }
-  }, [form.floor]);
+
+    loadResourceCatalog();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!form.floor && floorOptions.length > 0) {
+      setForm((prev) => ({ ...prev, floor: floorOptions[0] }));
+    }
+  }, [form.floor, floorOptions]);
 
   useEffect(() => {
     if (form.floor && !form.roomType) {
-      const types = getRoomTypesByFloor(form.floor);
+      const types = roomTypeOptions;
       if (types.length > 0) {
         setForm((prev) => ({ ...prev, roomType: types[0] }));
       }
     }
-  }, [form.floor, form.roomType]);
+  }, [form.floor, form.roomType, roomTypeOptions]);
 
   useEffect(() => {
-    if (form.floor && form.roomType && !form.roomNumber) {
-      const rooms = getRoomsByFloorAndType(form.floor, form.roomType);
-      if (rooms.length > 0) {
-        setForm((prev) => ({ ...prev, roomNumber: rooms[0] }));
+    if (form.floor && form.roomType) {
+      const generatedRoom = generateAutoRoomNumber(form.floor, form.roomType);
+      if (generatedRoom !== form.roomNumber) {
+        setForm((prev) => ({ ...prev, roomNumber: generatedRoom }));
       }
     }
   }, [form.floor, form.roomType, form.roomNumber]);
@@ -231,8 +430,6 @@ export default function LecturerBookingsPage() {
   async function fetchAvailability(showToastOnEmpty = false) {
     if (!form.floor || !form.roomType || !form.roomNumber || !form.date || dateError) {
       setBookedSlots([]);
-      setAvailableSlots([]);
-      setSuggestedSlot(null);
       return;
     }
 
@@ -246,8 +443,6 @@ export default function LecturerBookingsPage() {
       });
 
       setBookedSlots(data.bookedSlots || []);
-      setAvailableSlots(data.availableSlots || []);
-      setSuggestedSlot(data.suggestedSlot || null);
 
       if (showToastOnEmpty && (data.availableSlots || []).length === 0) {
         toast.info("No free slots for selected date.");
@@ -260,9 +455,10 @@ export default function LecturerBookingsPage() {
   }
 
   useEffect(() => {
-    if (!showModal) return;
-    fetchAvailability();
-  }, [showModal, form.floor, form.roomType, form.roomNumber, form.date]);
+    setAvailabilityChecked(false);
+    setBookedSlots([]);
+    setSelectedCriteriaLabel("");
+  }, [form.floor, form.roomType, form.roomNumber, form.date]);
 
   async function onFindAvailableSlots() {
     if (!form.floor || !form.roomType || !form.roomNumber || !form.date) {
@@ -276,6 +472,8 @@ export default function LecturerBookingsPage() {
     }
 
     await fetchAvailability(true);
+    setAvailabilityChecked(true);
+    setSelectedCriteriaLabel(`${form.floor} • ${form.roomNumber} • ${form.date}`);
   }
 
   async function onSubmitBooking(event) {
@@ -317,9 +515,21 @@ export default function LecturerBookingsPage() {
       return;
     }
 
+    const fallbackResourceId = selectedResource?.id || resourceCatalog[0]?.id;
+    if (!fallbackResourceId) {
+      toast.error("No resources are available for booking right now.");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await createLecturerBooking(form);
+      const bookingPayload = {
+        ...form,
+        resourceId: fallbackResourceId,
+      };
+
+      console.debug("Lecturer booking payload", bookingPayload);
+      await createLecturerBooking(bookingPayload);
       toast.success("Booking request submitted successfully.");
       setForm((prev) => ({
         ...initialForm,
@@ -330,9 +540,9 @@ export default function LecturerBookingsPage() {
         course: prev.course,
       }));
       setSubmitAttempted(false);
-      setAvailableSlots([]);
       setBookedSlots([]);
-      setSuggestedSlot(null);
+      setAvailabilityChecked(false);
+      setSelectedCriteriaLabel("");
       setShowModal(false);
       loadData();
     } catch (error) {
@@ -439,19 +649,19 @@ export default function LecturerBookingsPage() {
         {showModal ? (
           <motion.div className="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.div
-              className="mx-auto mt-16 w-[92%] max-w-2xl rounded-2xl border border-emerald-100 bg-white p-5 shadow-2xl"
+              className="booking-modal-panel mx-auto mt-16 w-[92%] max-w-2xl rounded-2xl border border-emerald-100 bg-white p-5 shadow-2xl"
               initial={{ opacity: 0, y: 20, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.24, ease: "easeOut" }}
             >
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-lg font-semibold text-slate-800">Create Lecture Hall Booking</h3>
+                <h3 className="text-xl font-semibold text-slate-900">Create Lecture Hall Booking</h3>
                 <button type="button" className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-100" onClick={() => setShowModal(false)}>Close</button>
               </div>
 
-              <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={onSubmitBooking}>
-                <div className="grid gap-1.5">
+              <form className="booking-form-modal mt-4 grid gap-4 md:grid-cols-2" onSubmit={onSubmitBooking}>
+                <div className="booking-field grid gap-2">
                   <label className="text-sm font-medium text-slate-700" htmlFor="lecturer-booking-floor">Floor</label>
                   <select
                     id="lecturer-booking-floor"
@@ -460,7 +670,7 @@ export default function LecturerBookingsPage() {
                     onChange={(e) => setForm((prev) => ({ ...prev, floor: e.target.value, roomType: "", roomNumber: "" }))}
                     required
                   >
-                    {FLOORS.map((floor) => (
+                    {floorOptions.map((floor) => (
                       <option key={floor} value={floor}>
                         {floor}
                       </option>
@@ -468,7 +678,7 @@ export default function LecturerBookingsPage() {
                   </select>
                 </div>
 
-                <div className="grid gap-1.5">
+                <div className="booking-field grid gap-2">
                   <label className="text-sm font-medium text-slate-700" htmlFor="lecturer-booking-room-type">Room Type</label>
                   <select
                     id="lecturer-booking-room-type"
@@ -491,24 +701,9 @@ export default function LecturerBookingsPage() {
                   </div>
                 </div>
 
-                <div className="grid gap-1.5">
-                  <label className="text-sm font-medium text-slate-700" htmlFor="lecturer-booking-room-number">Room Number</label>
-                  <select
-                    id="lecturer-booking-room-number"
-                    className="input-field"
-                    value={form.roomNumber}
-                    onChange={(e) => setForm((prev) => ({ ...prev, roomNumber: e.target.value }))}
-                    required
-                  >
-                    {roomNumberOptions.map((room) => (
-                      <option key={room} value={room}>
-                        {room}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <input type="hidden" value={form.roomNumber} readOnly />
 
-                <div className="grid gap-1.5">
+                <div className="booking-field grid gap-2">
                   <label className="text-sm font-medium text-slate-700" htmlFor="lecturer-booking-department">Department</label>
                   <select
                     id="lecturer-booking-department"
@@ -525,7 +720,7 @@ export default function LecturerBookingsPage() {
                   </select>
                 </div>
 
-                <div className="grid gap-1.5 md:col-span-2">
+                <div className="booking-field grid gap-2 md:col-span-2">
                   <label className="text-sm font-medium text-slate-700" htmlFor="lecturer-booking-course">Course</label>
                   <select
                     id="lecturer-booking-course"
@@ -542,7 +737,7 @@ export default function LecturerBookingsPage() {
                   </select>
                 </div>
 
-                <div className="grid gap-1.5">
+                <div className="booking-field grid gap-2">
                   <label className="text-sm font-medium text-slate-700" htmlFor="lecturer-booking-date">Date</label>
                   <input
                     id="lecturer-booking-date"
@@ -550,13 +745,13 @@ export default function LecturerBookingsPage() {
                     type="date"
                     value={form.date}
                     min={todayStr}
-                    onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value, startTime: "", endTime: "" }))}
+                    onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value, startTime: prev.startTime || "08:00", endTime: prev.endTime || "10:00" }))}
                     required
                   />
                   {dateError ? <p className="text-xs font-medium text-rose-600">You cannot book a past date</p> : null}
                 </div>
 
-                <div className="grid gap-1.5">
+                <div className="booking-field grid gap-2">
                   <label className="text-sm font-medium text-slate-700">Time Range</label>
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -582,7 +777,7 @@ export default function LecturerBookingsPage() {
                   {!startPastTimeError && !endPastTimeError && !timeOrderError && overlapError ? <p className="text-xs font-medium text-rose-600">{overlapError}</p> : null}
                 </div>
 
-                <div className="grid gap-1.5 md:col-span-2">
+                <div className="booking-field grid gap-2 md:col-span-2">
                   <label className="text-sm font-medium text-slate-700" htmlFor="lecturer-booking-purpose">Purpose / Topic</label>
                   <textarea
                     id="lecturer-booking-purpose"
@@ -594,7 +789,7 @@ export default function LecturerBookingsPage() {
                 </div>
 
                 <div className="md:col-span-2 flex flex-wrap items-center gap-2">
-                  <button type="button" className="btn-secondary" onClick={onFindAvailableSlots}>Check Available Slots</button>
+                  <button type="button" className="btn-secondary booking-action-button" onClick={onFindAvailableSlots}>Check Available Slots</button>
                 </div>
 
                 <div className="md:col-span-2 space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -603,27 +798,40 @@ export default function LecturerBookingsPage() {
                     {availabilityLoading ? <span className="text-xs text-slate-500">Loading...</span> : null}
                   </div>
 
-                  {bookedSlots.length === 0 ? (
-                    <p className="text-sm text-slate-500">No bookings yet - all slots available</p>
-                  ) : (
+                  {!availabilityChecked ? (
+                    <p className="text-sm text-slate-500">Choose Floor, Room, and Date, then click Check Available Slots to see booking breakdown.</p>
+                  ) : null}
+
+                  {availabilityChecked && selectedCriteriaLabel ? (
+                    <p className="text-xs text-slate-600">Showing availability for <span className="font-semibold text-slate-700">{selectedCriteriaLabel}</span></p>
+                  ) : null}
+
+                  {availabilityChecked && bookedRanges.length === 0 ? (
+                    <p className="text-sm text-emerald-700">Fully Available (8:00 AM - 8:00 PM)</p>
+                  ) : null}
+
+                  {availabilityChecked && bookedRanges.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {bookedSlots.map((slot) => (
+                      {bookedRanges.map((slot) => (
                         <span
-                          key={`booked-${slot.id || `${slot.startTime}-${slot.endTime}`}`}
+                          key={slot.id}
                           className="inline-flex rounded-lg bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700"
                         >
                           {formatTimeLabel(slot.startTime)} - {formatTimeLabel(slot.endTime)}
                         </span>
                       ))}
                     </div>
-                  )}
+                  ) : null}
 
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Available Slots</p>
-                  {availableSlots.length === 0 ? (
+
+                  {availabilityChecked && availableRanges.length === 0 ? (
                     <p className="text-sm text-slate-500">No free slots available for this hall and date.</p>
-                  ) : (
+                  ) : null}
+
+                  {availabilityChecked && availableRanges.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {availableSlots.map((slot) => {
+                      {availableRanges.map((slot) => {
                         const slotKey = `${slot.startTime}-${slot.endTime}`;
                         const isSelected = form.startTime === slot.startTime && form.endTime === slot.endTime;
 
@@ -639,19 +847,35 @@ export default function LecturerBookingsPage() {
                         );
                       })}
                     </div>
-                  )}
+                  ) : null}
 
-                  {suggestedSlot ? (
-                    <p className="text-xs text-slate-600">
-                      Nearest free slot suggestion: <span className="font-semibold text-emerald-700">{formatTimeLabel(suggestedSlot.startTime)} - {formatTimeLabel(suggestedSlot.endTime)}</span>
-                    </p>
+                  {availabilityChecked ? (
+                    <div className="space-y-1 pt-1">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Time Breakdown</p>
+                      {timeBreakdown.length === 0 ? (
+                        <p className="text-sm text-slate-500">No availability data for selected criteria.</p>
+                      ) : (
+                        <div className="space-y-1">
+                          {timeBreakdown.map((slot) => (
+                            <div key={slot.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs">
+                              <span className="font-medium text-slate-700">
+                                {formatTimeLabel(slot.startTime)} - {formatTimeLabel(slot.endTime)}
+                              </span>
+                              <span className={`rounded-full px-2 py-0.5 font-semibold ${slot.kind === "booked" ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"}`}>
+                                {slot.kind === "booked" ? "Booked" : "Available"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ) : null}
                 </div>
 
                 <div className="md:col-span-2 mt-1 flex justify-end">
                   <button
                     type="submit"
-                    className="btn-primary"
+                    className="btn-primary booking-submit-button"
                     disabled={submitting || !isFormValid}
                   >
                     {submitting ? "Submitting..." : "Submit Booking Request"}

@@ -4,6 +4,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
 import java.util.List;
+import java.util.Arrays;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -56,6 +61,7 @@ public class SecurityConfig {
                     .requestMatchers(new AntPathRequestMatcher("/api/v1/auth/login")).permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/api/v1/auth/register")).permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/api/v1/auth/forgot-password")).permitAll()
+                    .requestMatchers(new AntPathRequestMatcher("/api/v1/admin/**")).hasRole("ADMIN")
                     .requestMatchers(new AntPathRequestMatcher("/error")).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -77,9 +83,36 @@ public class SecurityConfig {
     }
 
     @Bean
+    RoleHierarchy roleHierarchy() {
+        return RoleHierarchyImpl.fromHierarchy(
+            "ROLE_ADMIN > ROLE_TECHNICIAN\n"
+                        + "ROLE_ADMIN > ROLE_LECTURER\n"
+                        + "ROLE_ADMIN > ROLE_STUDENT\n"
+                        + "ROLE_TECHNICIAN > ROLE_USER\n"
+                        + "ROLE_LECTURER > ROLE_USER\n"
+                        + "ROLE_STUDENT > ROLE_USER"
+        );
+    }
+
+    @Bean
+    MethodSecurityExpressionHandler methodSecurityExpressionHandler(RoleHierarchy roleHierarchy) {
+        DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
+        expressionHandler.setRoleHierarchy(roleHierarchy);
+        return expressionHandler;
+    }
+
+    @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(corsOrigin));
+        List<String> allowedOriginPatterns = Arrays.stream(corsOrigin.split(","))
+            .map(String::trim)
+            .filter(origin -> !origin.isEmpty())
+            .toList();
+        config.setAllowedOriginPatterns(
+            allowedOriginPatterns.isEmpty()
+                ? List.of("http://localhost:*", "http://127.0.0.1:*")
+                : allowedOriginPatterns
+        );
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(false);

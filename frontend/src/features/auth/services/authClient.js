@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081/api/v1";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 
 async function post(path, payload) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -21,12 +21,13 @@ export async function loginWithEmail({ email, password }) {
   return post("/auth/login", { email, password });
 }
 
-export async function registerUser({ name, email, password, role }) {
+export async function registerUser({ name, fullName, email, password, confirmPassword, role }) {
   return post("/auth/register", {
-    name,
+    fullName: fullName || name,
     email,
     password,
-    role,
+    confirmPassword: confirmPassword || password,
+    role: role || "student",
   });
 }
 

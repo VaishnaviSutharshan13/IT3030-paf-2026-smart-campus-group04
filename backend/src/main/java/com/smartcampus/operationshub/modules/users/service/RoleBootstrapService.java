@@ -19,6 +19,9 @@ public class RoleBootstrapService implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         ensureRole(RoleConstants.ROLE_USER, "Standard User");
+        ensureRole(RoleConstants.ROLE_STUDENT, "Student");
+        ensureRole(RoleConstants.ROLE_LECTURER, "Lecturer");
+        ensureRole(RoleConstants.ROLE_TECHNICIAN, "Technician");
         ensureRole(RoleConstants.ROLE_ADMIN, "Administrator");
     }
 

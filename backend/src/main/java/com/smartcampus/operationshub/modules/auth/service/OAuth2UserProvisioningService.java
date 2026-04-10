@@ -22,12 +22,12 @@ public class OAuth2UserProvisioningService {
 
     @Transactional
     public User provisionGoogleUser(Map<String, Object> attributes) {
-        String email = (String) attributes.get("email");
+        String email = normalizeEmail((String) attributes.get("email"));
         String subject = (String) attributes.get("sub");
         String name = (String) attributes.getOrDefault("name", email);
 
         User user = userRepository.findByOauthProviderAndOauthSubject("google", subject)
-                .orElseGet(() -> userRepository.findByEmail(email).orElseGet(User::new));
+            .orElseGet(() -> userRepository.findByEmailIgnoreCase(email).orElseGet(User::new));
 
         user.setEmail(email);
         user.setFullName(name);
@@ -42,5 +42,9 @@ public class OAuth2UserProvisioningService {
         }
 
         return userRepository.save(user);
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase();
     }
 }

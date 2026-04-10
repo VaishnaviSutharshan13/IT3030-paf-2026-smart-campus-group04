@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class CredentialsAuthService {
 
+    private static final String GENERIC_LOGIN_FAILURE = "Login failed. Please check your credentials";
+
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
@@ -47,12 +49,13 @@ public class CredentialsAuthService {
         }
 
         String email = request.getEmail().trim().toLowerCase();
-        if (userRepository.findByEmail(email).isPresent()) {
+        if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
             throw new ConflictException("An account with this email already exists");
         }
 
-        Role userRole = roleRepository.findByCode(RoleConstants.ROLE_USER)
-            .orElseGet(() -> createRole(RoleConstants.ROLE_USER, "Standard User"));
+        String normalizedRole = normalizePublicRegistrationRole(request.getRole());
+        Role userRole = roleRepository.findByCode(normalizedRole)
+            .orElseGet(() -> createRole(normalizedRole, toDisplayName(normalizedRole)));
 
         User user = new User();
         user.setFullName(request.getFullName().trim());
@@ -71,14 +74,38 @@ public class CredentialsAuthService {
         return roleRepository.save(role);
     }
 
+    private String normalizePublicRegistrationRole(String role) {
+        String value = role == null ? "" : role.trim().toUpperCase();
+        if (value.endsWith("ADMIN")) {
+            throw new BusinessRuleException("Admin registration is not allowed");
+        }
+        return switch (value) {
+            case "STUDENT", "USER" -> RoleConstants.ROLE_STUDENT;
+            case "LECTURER" -> RoleConstants.ROLE_LECTURER;
+            case "TECHNICIAN" -> RoleConstants.ROLE_TECHNICIAN;
+            default -> throw new BusinessRuleException("Unsupported registration role");
+        };
+    }
+
+    private String toDisplayName(String roleCode) {
+        return switch (roleCode) {
+            case RoleConstants.ROLE_STUDENT -> "Student";
+            case RoleConstants.ROLE_LECTURER -> "Lecturer";
+            case RoleConstants.ROLE_TECHNICIAN -> "Technician";
+            case RoleConstants.ROLE_ADMIN -> "Administrator";
+            default -> "Standard User";
+        };
+    }
+
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         String email = request.getEmail().trim().toLowerCase();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BusinessRuleException("Invalid email or password"));
+        String rawPassword = request.getPassword() == null ? "" : request.getPassword().trim();
+        User user = userRepository.findByEmailIgnoreCase(email)
+            .orElseThrow(() -> new BusinessRuleException(GENERIC_LOGIN_FAILURE));
 
-        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new BusinessRuleException("Invalid email or password");
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
+            throw new BusinessRuleException(GENERIC_LOGIN_FAILURE);
         }
 
         if (!user.isActive()) {
@@ -91,7 +118,7 @@ public class CredentialsAuthService {
     @Transactional(readOnly = true)
     public ForgotPasswordResponse forgotPassword(ForgotPasswordRequest request) {
         String email = request.getEmail().trim().toLowerCase();
-        boolean exists = userRepository.findByEmail(email).isPresent();
+        boolean exists = userRepository.findByEmailIgnoreCase(email).isPresent();
 
         String message = exists
                 ? "If this email exists, a reset link has been sent"

@@ -3,19 +3,25 @@
 ## Tech Stack
 - Frontend: React + Vite + CSS
 - Backend: Spring Boot REST API
-- Database: MySQL + Flyway
+- Database: PostgreSQL + Flyway
 
 ## 1. Prerequisites
 - Java 17+
 - Maven 3.9+
 - Node.js 18+
-- MySQL 8+
+- PostgreSQL 14+
 
-## 2. Database Setup (MySQL)
-Run these commands in MySQL:
+## 2. Database Setup (PostgreSQL)
+Run these commands in PostgreSQL:
 
 ```sql
 CREATE DATABASE smart_campus_hub;
+```
+
+If your local PostgreSQL password is not `postgres`, export it before running backend:
+
+```bash
+export SPRING_DATASOURCE_PASSWORD=<your_postgres_password>
 ```
 
 Flyway will automatically create all tables from:

@@ -75,7 +75,7 @@ export default function SettingsPage({ title = "Settings" }) {
     admin: { modules: { bookings: true, tickets: true, resources: true, reports: true } },
   });
 
-  const isAdminRole = useMemo(() => role === "admin" || role === "super_admin", [role]);
+  const isAdminRole = useMemo(() => role === "admin", [role]);
   const hasPasswordValues = Boolean(form.currentPassword || form.newPassword || form.confirmPassword);
   const passwordWeak =
     Boolean(form.newPassword) &&

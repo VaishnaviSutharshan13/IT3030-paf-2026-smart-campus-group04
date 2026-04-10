@@ -11,7 +11,7 @@ import {
 import { useToast } from "../shared/components/feedback/ToastProvider";
 
 function getNotificationRoute(role) {
-  if (role === "admin" || role === "super_admin") return "/admin-dashboard/notifications";
+  if (role === "admin") return "/admin-dashboard/notifications";
   if (role === "lecturer") return "/lecturer-dashboard/notifications";
   if (role === "technician") return "/technician-dashboard/notifications";
   return "/student-dashboard/notifications";

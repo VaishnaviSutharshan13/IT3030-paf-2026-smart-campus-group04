@@ -37,8 +37,17 @@ export default function NotificationsPage() {
         page: currentPage,
         limit,
       });
-      setItems(response?.items || []);
-      setTotal(Number(response?.total || 0));
+
+      const rows = Array.isArray(response) ? response : response?.items || [];
+      let filteredRows = rows;
+      if (currentFilter === "unread") {
+        filteredRows = rows.filter((item) => !item.read);
+      } else if (currentFilter === "read") {
+        filteredRows = rows.filter((item) => item.read);
+      }
+
+      setItems(filteredRows);
+      setTotal(Number(filteredRows.length || 0));
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -55,7 +64,7 @@ export default function NotificationsPage() {
   async function onRead(itemId) {
     try {
       await markNotificationRead(itemId);
-      setItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, is_read: true } : item)));
+      setItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, read: true } : item)));
     } catch {
       toast.error("Something went wrong");
     }
@@ -78,7 +87,7 @@ export default function NotificationsPage() {
     setBusy(true);
     try {
       await clearAllNotifications();
-      toast.success("Notifications cleared.");
+      toast.success("Notifications marked as read.");
       setPage(1);
       loadNotifications(filter, 1);
     } catch {
@@ -152,14 +161,14 @@ export default function NotificationsPage() {
 
         <div className="space-y-2">
           {items.map((item) => (
-            <article key={item.id} className={`rounded-xl border px-3 py-3 ${item.is_read ? "border-emerald-100" : "border-campus-300 bg-emerald-50/70"}`}>
+            <article key={item.id} className={`rounded-xl border px-3 py-3 ${item.read ? "border-emerald-100" : "border-campus-300 bg-emerald-50/70"}`}>
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-campus-700">{item.title}</p>
                   <p className="mt-1 text-sm text-slate-700">{item.message}</p>
-                  <p className="mt-1 text-[11px] text-slate-500">{getTimeAgo(item.created_at)}</p>
+                  <p className="mt-1 text-[11px] text-slate-500">{getTimeAgo(item.createdAt)}</p>
                 </div>
-                {!item.is_read ? (
+                {!item.read ? (
                   <button
                     type="button"
                     className="rounded-lg border border-emerald-200 px-2 py-1 text-[11px] font-semibold text-campus-700 transition hover:bg-emerald-50"

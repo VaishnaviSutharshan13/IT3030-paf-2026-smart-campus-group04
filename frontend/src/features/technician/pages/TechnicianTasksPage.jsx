@@ -12,7 +12,7 @@ export default function TechnicianTasksPage() {
     setLoading(true);
     try {
       const rows = await getBookings();
-      setBookings(rows.filter((row) => row.roomType === "Lab"));
+      setBookings((rows || []).filter((row) => ["PENDING", "APPROVED"].includes(String(row.status || "").toUpperCase())));
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -34,7 +34,7 @@ export default function TechnicianTasksPage() {
         {bookings.map((booking) => (
           <article key={booking._id || booking.id} className="rounded-xl border border-emerald-100 p-4">
             <p className="text-sm font-semibold text-slate-800">{booking.floor} • {booking.roomNumber} ({booking.roomType})</p>
-            <p className="text-xs text-slate-500">{booking.date} • {booking.startTime}-{booking.endTime}</p>
+            <p className="text-xs text-slate-500">{booking.date || "TBD"} • {booking.startTime || "--:--"}-{booking.endTime || "--:--"}</p>
             <p className="text-xs text-slate-500">{booking.department} • {booking.course || "No course linked"}</p>
             <span className="mt-2 inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-campus-700">{booking.status}</span>
             <p className="mt-2 text-xs text-slate-500">Maintenance note: Prepare lab systems and check smart devices before the class starts.</p>

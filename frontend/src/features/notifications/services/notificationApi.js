@@ -1,24 +1,22 @@
 import { apiFetch } from "../../../core/api/httpClient";
 
 export function getNotifications(options = {}) {
-  const params = new URLSearchParams();
-  if (options.filter) params.set("filter", options.filter);
-  if (options.page) params.set("page", String(options.page));
-  if (options.limit) params.set("limit", String(options.limit));
-  const query = params.toString() ? `?${params.toString()}` : "";
-  return apiFetch(`/notifications${query}`);
+  return apiFetch("/notifications");
 }
 
 export function getNotificationSummary() {
-  return apiFetch("/notifications/summary");
+  return getNotifications().then((items) => ({
+    total: (items || []).length,
+    unread: (items || []).filter((item) => !item.read).length,
+  }));
 }
 
 export function markNotificationRead(id) {
-  return apiFetch(`/notifications/${id}/read`, { method: "PATCH" });
+  return apiFetch(`/notifications/${id}/read`, { method: "POST" });
 }
 
 export function markAllNotificationsRead() {
-  return apiFetch("/notifications/read-all", { method: "PATCH" });
+  return apiFetch("/notifications/read-all", { method: "POST" });
 }
 
 export function deleteNotification(id) {
@@ -26,12 +24,9 @@ export function deleteNotification(id) {
 }
 
 export function clearAllNotifications() {
-  return apiFetch("/notifications/clear-all", { method: "DELETE" });
+  return markAllNotificationsRead();
 }
 
 export function createAnnouncement(payload) {
-  return apiFetch("/notifications/announcements", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return Promise.reject(new Error("Announcements endpoint is not available in this backend."));
 }

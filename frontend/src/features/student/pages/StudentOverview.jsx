@@ -1,61 +1,121 @@
-import React, { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
-import { getCourses } from "../../courses/services/courseApi";
-import { createTicket } from "../../tickets/services/ticketApi";
-import { useToast } from "../../../shared/components/feedback/ToastProvider";
+import React, { useEffect, useMemo, useState } from "react";
+import { BellRing, CalendarClock, MapPinned } from "lucide-react";
+import DashboardCard from "../../../components/dashboard/DashboardCard";
+import DataTable from "../../../components/dashboard/DataTable";
+import StatusBadge from "../../../components/dashboard/StatusBadge";
+import { getBookings } from "../../bookings/services/bookingApi";
+import { fetchResources } from "../../resources/services/resourceService";
 
 export default function StudentOverview() {
-  const toast = useToast();
-  const [courses, setCourses] = useState([]);
+  const [resources, setResources] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [error, setError] = useState("");
-  const [ticket, setTicket] = useState({ title: "", description: "", priority: "Medium", attachmentUrl: "" });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getCourses().then(setCourses).catch((err) => setError(err.message));
+    async function loadDashboardData() {
+      setIsLoading(true);
+      setError("");
+      try {
+        const [resourceRows, bookingRows] = await Promise.all([fetchResources(), getBookings()]);
+        setResources(Array.isArray(resourceRows) ? resourceRows : []);
+        setBookings(Array.isArray(bookingRows) ? bookingRows : []);
+      } catch (err) {
+        setError(err.message || "Failed to load student dashboard.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadDashboardData();
   }, []);
 
-  if (error) {
-    return <section className="panel p-5 text-sm text-rose-600">{error}</section>;
-  }
+  const availableRooms = useMemo(
+    () => resources.filter((resource) => resource.active !== false).slice(0, 10),
+    [resources]
+  );
 
-  async function onCreateTicket(event) {
-    event.preventDefault();
-    try {
-      await createTicket(ticket);
-      setTicket({ title: "", description: "", priority: "Medium", attachmentUrl: "" });
-      toast.success("Incident ticket created.");
-    } catch (err) {
-      toast.error(err.message);
-    }
+  const scheduleRows = useMemo(() => bookings.slice(0, 10), [bookings]);
+
+  const notifications = [
+    "Lab orientation opens at 09:00 tomorrow.",
+    "Two of your recent booking requests are pending approval.",
+    "Upload assignment files before Friday 5:00 PM.",
+  ];
+
+  if (error) {
+    return <section className="dashboard-glass-card p-5 text-sm text-rose-700">{error}</section>;
   }
 
   return (
     <section className="space-y-5">
+      <article className="dashboard-hero">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">Student Workspace</p>
+        <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-800">Your Smart Campus Dashboard</h2>
+        <p className="mt-2 max-w-2xl text-sm text-slate-600">Read-only snapshots of room availability, booking timetable, and notifications.</p>
+      </article>
+
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="panel p-5"><p className="text-xs uppercase text-emerald-500">Enrolled Courses</p><p className="mt-2 text-3xl font-semibold text-campus-700">{courses.length}</p></div>
-        <div className="panel p-5"><p className="text-xs uppercase text-emerald-500">Materials</p><p className="mt-2 text-3xl font-semibold text-campus-700">Live</p></div>
-        <div className="panel p-5"><p className="text-xs uppercase text-emerald-500">Assignment Status</p><p className="mt-2 text-3xl font-semibold text-campus-700">Tracked</p></div>
+        <DashboardCard title="Available Rooms" value={availableRooms.length} subtitle="Open resources right now" icon={MapPinned} />
+        <DashboardCard title="My Schedule" value={scheduleRows.length} subtitle="Recent booking entries" icon={CalendarClock} />
+        <DashboardCard title="Notifications" value={notifications.length} subtitle="Latest updates" icon={BellRing} />
       </div>
 
-      <div className="panel p-5">
-        <h3 className="text-base font-semibold text-slate-800">Report an Incident</h3>
-        <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={onCreateTicket}>
-          <input className="input-field" placeholder="Ticket title" value={ticket.title} onChange={(e) => setTicket((p) => ({ ...p, title: e.target.value }))} required />
-          <select className="input-field" value={ticket.priority} onChange={(e) => setTicket((p) => ({ ...p, priority: e.target.value }))}>
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-          </select>
-          <textarea className="input-field md:col-span-2" placeholder="Describe the issue" value={ticket.description} onChange={(e) => setTicket((p) => ({ ...p, description: e.target.value }))} required />
-          <input className="input-field md:col-span-2" placeholder="Attachment URL (.jpg/.png/.pdf...)" value={ticket.attachmentUrl} onChange={(e) => setTicket((p) => ({ ...p, attachmentUrl: e.target.value }))} />
-          <div className="md:col-span-2 mt-1 flex justify-end">
-            <button type="submit" className="btn-primary gap-2">
-              <Plus size={16} />
-              Create Ticket
-            </button>
-          </div>
-        </form>
-      </div>
+      <article className="dashboard-glass-card p-5">
+        <h3 className="text-lg font-semibold text-slate-800">View Available Rooms</h3>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {availableRooms.length > 0 ? (
+            availableRooms.map((room) => (
+              <div key={room.id || room.code} className="rounded-2xl border border-white/70 bg-white/70 p-4">
+                <p className="text-sm font-semibold text-slate-700">{room.code || room.name || `Room #${room.id}`}</p>
+                <p className="mt-1 text-xs text-slate-500">{room.type || "Room"}</p>
+                <div className="mt-2">
+                  <StatusBadge status={room.active === false ? "inactive" : "active"} label={room.active === false ? "Inactive" : "Active"} />
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-slate-500">No data available</p>
+          )}
+        </div>
+      </article>
+
+      <article className="dashboard-glass-card p-5">
+        <h3 className="text-lg font-semibold text-slate-800">View Booking Schedule</h3>
+        <p className="mt-1 text-sm text-slate-500">Timetable view of your latest booking records.</p>
+        <div className="mt-4">
+          <DataTable
+            loading={isLoading}
+            rows={scheduleRows}
+            emptyText="No data available"
+            columns={[
+              { key: "roomNumber", label: "Room" },
+              { key: "date", label: "Date" },
+              {
+                key: "time",
+                label: "Time",
+                render: (row) => `${row.startTime || "--:--"} - ${row.endTime || "--:--"}`,
+              },
+              {
+                key: "status",
+                label: "Status",
+                render: (row) => <StatusBadge status={row.status} />,
+              },
+            ]}
+          />
+        </div>
+      </article>
+
+      <article className="dashboard-glass-card p-5">
+        <h3 className="text-lg font-semibold text-slate-800">Notifications</h3>
+        <div className="mt-3 space-y-2">
+          {notifications.map((notice) => (
+            <div key={notice} className="rounded-xl border border-cyan-100 bg-cyan-50/70 px-3 py-2 text-sm text-slate-700">
+              {notice}
+            </div>
+          ))}
+        </div>
+      </article>
     </section>
   );
 }

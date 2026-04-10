@@ -2,6 +2,7 @@ package com.smartcampus.operationshub.modules.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class RegisterRequest {
@@ -15,19 +16,27 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank
-    @Size(min = 6, max = 120)
+        @Size(min = 8, max = 120)
+        @Pattern(
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d]).+$",
+            message = "Password must include upper, lower, number, and special character"
+        )
     private String password;
 
     @NotBlank
-    @Size(min = 6, max = 120)
+        @Size(min = 8, max = 120)
     private String confirmPassword;
+
+        @NotBlank
+        @Pattern(regexp = "(?i)student|lecturer|technician", message = "Role must be student, lecturer, or technician")
+        private String role;
 
     public String getFullName() {
         return fullName;
     }
 
     public void setFullName(String fullName) {
-        this.fullName = fullName;
+        this.fullName = fullName == null ? null : fullName.trim();
     }
 
     public String getEmail() {
@@ -35,7 +44,7 @@ public class RegisterRequest {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = email == null ? null : email.trim();
     }
 
     public String getPassword() {
@@ -52,5 +61,13 @@ public class RegisterRequest {
 
     public void setConfirmPassword(String confirmPassword) {
         this.confirmPassword = confirmPassword;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role == null ? null : role.trim();
     }
 }

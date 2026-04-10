@@ -20,6 +20,7 @@ const AdminCoursesPage = lazy(() => import("../../features/admin/pages/AdminCour
 const AdminBookingsPage = lazy(() => import("../../features/admin/pages/AdminBookingsPage"));
 const AdminReportsPage = lazy(() => import("../../features/admin/pages/AdminReportsPage"));
 const AdminFacilitiesPage = lazy(() => import("../../features/admin/pages/AdminFacilitiesPage"));
+const AdminIncidentsPage = lazy(() => import("../../features/admin/pages/AdminIncidentsPage"));
 const StudentLayout = lazy(() => import("../../features/student/layouts/StudentLayout"));
 const StudentOverview = lazy(() => import("../../features/student/pages/StudentOverview"));
 const StudentCoursesPage = lazy(() => import("../../features/student/pages/StudentCoursesPage"));
@@ -88,12 +89,13 @@ export default function AppRouter() {
             </Route>
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["admin", "super_admin"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
             <Route path="/admin-dashboard" element={<AdminLayout />}>
               <Route index element={<AdminOverview />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="courses" element={<AdminCoursesPage />} />
               <Route path="bookings" element={<AdminBookingsPage />} />
+              <Route path="incidents" element={<AdminIncidentsPage />} />
               <Route path="facilities" element={<AdminFacilitiesPage />} />
               <Route path="resources" element={<AdminFacilitiesPage />} />
               <Route path="reports" element={<AdminReportsPage />} />
@@ -116,7 +118,7 @@ export default function AppRouter() {
             </Route>
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["student", "lecturer", "admin", "super_admin", "technician"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["student", "lecturer", "admin", "technician"]} />}>
             <Route path="/dashboard" element={<RoleRouteRedirect section="dashboard" />} />
             <Route path="/courses" element={<RoleRouteRedirect section="courses" />} />
             <Route path="/materials" element={<RoleRouteRedirect section="materials" />} />

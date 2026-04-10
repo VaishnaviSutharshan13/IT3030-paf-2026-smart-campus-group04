@@ -10,6 +10,7 @@ import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -70,6 +71,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnknown(Exception ex, HttpServletRequest request) {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred", request.getRequestURI());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleNoResource(NoResourceFoundException ex, HttpServletRequest request) {
+        return build(HttpStatus.NOT_FOUND, "Resource not found", request.getRequestURI());
     }
 
     private ResponseEntity<ApiError> build(HttpStatus status, String message, String path) {

@@ -3,7 +3,6 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/context/AuthContext";
 
 const roleHomes = {
-  super_admin: "/admin-dashboard",
   student: "/student-dashboard",
   lecturer: "/lecturer-dashboard",
   admin: "/admin-dashboard",

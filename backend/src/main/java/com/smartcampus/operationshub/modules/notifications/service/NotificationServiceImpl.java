@@ -58,6 +58,18 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.saveAll(notifications);
     }
 
+    @Override
+    @PreAuthorize("hasAnyRole('LECTURER','TECHNICIAN','ADMIN')")
+    public void createNotification(Long recipientUserId, Long actorUserId, String typeCode, String title, String message) {
+        notificationRepository.insertNotification(
+                recipientUserId,
+                actorUserId,
+                typeCode == null || typeCode.isBlank() ? "SYSTEM" : typeCode.trim().toUpperCase(),
+                title,
+                message
+        );
+    }
+
     private NotificationResponse toResponse(Notification notification) {
         return new NotificationResponse(
                 notification.getId(),

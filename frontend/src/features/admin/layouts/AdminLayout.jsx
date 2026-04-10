@@ -2,11 +2,9 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
 import Navbar from "../../../components/Navbar";
-import { useAuth } from "../../auth/context/AuthContext";
 
 export default function AdminLayout() {
-  const { user } = useAuth();
-  const role = user?.role === "super_admin" ? "super_admin" : "admin";
+  const role = "admin";
 
   return (
     <div className="flex min-h-screen">

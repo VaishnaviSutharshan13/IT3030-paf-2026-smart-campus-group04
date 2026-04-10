@@ -1,13 +1,13 @@
--- Smart Campus Operations Hub - Initial relational schema (MySQL 8+)
+-- Smart Campus Operations Hub - Initial relational schema (PostgreSQL)
 
 CREATE TABLE roles (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     code VARCHAR(32) NOT NULL UNIQUE,
     display_name VARCHAR(64) NOT NULL
 );
 
 CREATE TABLE users (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     full_name VARCHAR(120) NOT NULL,
     password_hash VARCHAR(255) NULL,
@@ -15,13 +15,13 @@ CREATE TABLE users (
     oauth_subject VARCHAR(191) NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uk_users_oauth_identity (oauth_provider, oauth_subject)
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_users_oauth_identity UNIQUE (oauth_provider, oauth_subject)
 );
 
 CREATE TABLE user_roles (
-    user_id BIGINT UNSIGNED NOT NULL,
-    role_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
     assigned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, role_id),
     CONSTRAINT fk_user_roles_user FOREIGN KEY (user_id)
@@ -31,23 +31,24 @@ CREATE TABLE user_roles (
 );
 
 CREATE TABLE resource_types (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     code VARCHAR(32) NOT NULL UNIQUE,
     display_name VARCHAR(64) NOT NULL
 );
 
 CREATE TABLE resources (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    resource_type_id BIGINT UNSIGNED NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    resource_type_id BIGINT NOT NULL,
     code VARCHAR(50) NOT NULL UNIQUE,
     name VARCHAR(120) NOT NULL,
     location VARCHAR(120) NOT NULL,
-    capacity INT UNSIGNED NULL,
+    capacity INTEGER NULL,
     description TEXT NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_by BIGINT UNSIGNED NOT NULL,
+    created_by BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT ck_resources_capacity_non_negative CHECK (capacity IS NULL OR capacity >= 0),
     CONSTRAINT fk_resources_type FOREIGN KEY (resource_type_id)
         REFERENCES resource_types(id) ON DELETE RESTRICT,
     CONSTRAINT fk_resources_created_by FOREIGN KEY (created_by)
@@ -55,27 +56,27 @@ CREATE TABLE resources (
 );
 
 CREATE TABLE booking_statuses (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     code VARCHAR(32) NOT NULL UNIQUE,
     display_name VARCHAR(64) NOT NULL
 );
 
 CREATE TABLE bookings (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    requester_user_id BIGINT UNSIGNED NOT NULL,
-    resource_id BIGINT UNSIGNED NOT NULL,
-    status_id BIGINT UNSIGNED NOT NULL,
-    current_approver_user_id BIGINT UNSIGNED NULL,
-    approved_by_user_id BIGINT UNSIGNED NULL,
-    cancelled_by_user_id BIGINT UNSIGNED NULL,
-    start_at DATETIME NOT NULL,
-    end_at DATETIME NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    requester_user_id BIGINT NOT NULL,
+    resource_id BIGINT NOT NULL,
+    status_id BIGINT NOT NULL,
+    current_approver_user_id BIGINT NULL,
+    approved_by_user_id BIGINT NULL,
+    cancelled_by_user_id BIGINT NULL,
+    start_at TIMESTAMP NOT NULL,
+    end_at TIMESTAMP NOT NULL,
     purpose VARCHAR(255) NOT NULL,
     rejection_reason VARCHAR(500) NULL,
-    approved_at DATETIME NULL,
-    cancelled_at DATETIME NULL,
+    approved_at TIMESTAMP NULL,
+    cancelled_at TIMESTAMP NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ck_bookings_time_window CHECK (start_at < end_at),
     CONSTRAINT fk_bookings_requester FOREIGN KEY (requester_user_id)
         REFERENCES users(id) ON DELETE RESTRICT,
@@ -92,10 +93,10 @@ CREATE TABLE bookings (
 );
 
 CREATE TABLE booking_status_history (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    booking_id BIGINT UNSIGNED NOT NULL,
-    status_id BIGINT UNSIGNED NOT NULL,
-    changed_by_user_id BIGINT UNSIGNED NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    booking_id BIGINT NOT NULL,
+    status_id BIGINT NOT NULL,
+    changed_by_user_id BIGINT NOT NULL,
     change_note VARCHAR(500) NULL,
     changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_booking_history_booking FOREIGN KEY (booking_id)
@@ -107,31 +108,32 @@ CREATE TABLE booking_status_history (
 );
 
 CREATE TABLE ticket_statuses (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     code VARCHAR(32) NOT NULL UNIQUE,
     display_name VARCHAR(64) NOT NULL
 );
 
 CREATE TABLE ticket_priorities (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     code VARCHAR(32) NOT NULL UNIQUE,
     display_name VARCHAR(64) NOT NULL,
-    sort_order TINYINT UNSIGNED NOT NULL
+    sort_order SMALLINT NOT NULL,
+    CONSTRAINT ck_ticket_priorities_sort_order_non_negative CHECK (sort_order >= 0)
 );
 
 CREATE TABLE tickets (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    reporter_user_id BIGINT UNSIGNED NOT NULL,
-    assigned_technician_user_id BIGINT UNSIGNED NULL,
-    resource_id BIGINT UNSIGNED NULL,
-    status_id BIGINT UNSIGNED NOT NULL,
-    priority_id BIGINT UNSIGNED NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    reporter_user_id BIGINT NOT NULL,
+    assigned_technician_user_id BIGINT NULL,
+    resource_id BIGINT NULL,
+    status_id BIGINT NOT NULL,
+    priority_id BIGINT NOT NULL,
     title VARCHAR(180) NOT NULL,
     description TEXT NOT NULL,
-    incident_at DATETIME NULL,
-    resolved_at DATETIME NULL,
+    incident_at TIMESTAMP NULL,
+    resolved_at TIMESTAMP NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_tickets_reporter FOREIGN KEY (reporter_user_id)
         REFERENCES users(id) ON DELETE RESTRICT,
     CONSTRAINT fk_tickets_assigned_technician FOREIGN KEY (assigned_technician_user_id)
@@ -145,13 +147,13 @@ CREATE TABLE tickets (
 );
 
 CREATE TABLE comments (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    author_user_id BIGINT UNSIGNED NOT NULL,
-    booking_id BIGINT UNSIGNED NULL,
-    ticket_id BIGINT UNSIGNED NULL,
+    id BIGSERIAL PRIMARY KEY,
+    author_user_id BIGINT NOT NULL,
+    booking_id BIGINT NULL,
+    ticket_id BIGINT NULL,
     body TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ck_comments_single_parent CHECK (
         (booking_id IS NOT NULL AND ticket_id IS NULL) OR
         (booking_id IS NULL AND ticket_id IS NOT NULL)
@@ -165,23 +167,23 @@ CREATE TABLE comments (
 );
 
 CREATE TABLE notification_types (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     code VARCHAR(32) NOT NULL UNIQUE,
     display_name VARCHAR(80) NOT NULL
 );
 
 CREATE TABLE notifications (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    recipient_user_id BIGINT UNSIGNED NOT NULL,
-    actor_user_id BIGINT UNSIGNED NULL,
-    notification_type_id BIGINT UNSIGNED NOT NULL,
-    booking_id BIGINT UNSIGNED NULL,
-    ticket_id BIGINT UNSIGNED NULL,
+    id BIGSERIAL PRIMARY KEY,
+    recipient_user_id BIGINT NOT NULL,
+    actor_user_id BIGINT NULL,
+    notification_type_id BIGINT NOT NULL,
+    booking_id BIGINT NULL,
+    ticket_id BIGINT NULL,
     title VARCHAR(180) NOT NULL,
     message VARCHAR(500) NOT NULL,
     link_url VARCHAR(255) NULL,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
-    read_at DATETIME NULL,
+    read_at TIMESTAMP NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_notifications_recipient FOREIGN KEY (recipient_user_id)
         REFERENCES users(id) ON DELETE CASCADE,

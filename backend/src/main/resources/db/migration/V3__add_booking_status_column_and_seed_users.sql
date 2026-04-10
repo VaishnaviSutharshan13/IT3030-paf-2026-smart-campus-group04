@@ -2,8 +2,9 @@ ALTER TABLE bookings
     ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'PENDING';
 
 UPDATE bookings b
-JOIN booking_statuses bs ON b.status_id = bs.id
-SET b.status = bs.code;
+SET status = bs.code
+FROM booking_statuses bs
+WHERE b.status_id = bs.id;
 
 INSERT INTO users (email, full_name, password_hash, is_active)
 SELECT 'admin@campus.edu', 'System Administrator', '$2a$10$7EqJtq98hPqEX7fNZaFWoOHI2C6jM4mQUp3NEPoPFcAckU4iigI5y', TRUE

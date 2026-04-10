@@ -1,0 +1,10 @@
+ installed_rank | version |               description                | type |                      script                      | success 
+----------------+---------+------------------------------------------+------+--------------------------------------------------+---------
+              1 | 1       | create smart campus schema               | SQL  | V1__create_smart_campus_schema.sql               | t
+              2 | 2       | add ticket images                        | SQL  | V2__add_ticket_images.sql                        | t
+              3 | 3       | add booking status column and seed users | SQL  | V3__add_booking_status_column_and_seed_users.sql | t
+              4 | 4       | default booking status id                | SQL  | V4__default_booking_status_id.sql                | t
+              5 | 5       | ensure default roles                     | SQL  | V5__ensure_default_roles.sql                     | t
+              6 | 6       | add student and lecturer roles           | SQL  | V6__add_student_and_lecturer_roles.sql           | t
+(6 rows)
+

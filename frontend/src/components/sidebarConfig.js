@@ -15,22 +15,12 @@ import {
 } from "lucide-react";
 
 export const sidebarItemsByRole = {
-  super_admin: [
-    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, to: "/admin-dashboard", end: true },
-    { key: "users", label: "User Management", icon: UserCog, to: "/admin-dashboard/users" },
-    { key: "courses", label: "Courses", icon: BookOpen, to: "/admin-dashboard/courses" },
-    { key: "bookings", label: "Bookings", icon: CalendarCheck2, to: "/admin-dashboard/bookings" },
-    { key: "resources", label: "Resources", icon: Building2, to: "/admin-dashboard/resources" },
-    { key: "reports", label: "Reports", icon: BarChart3, to: "/admin-dashboard/reports" },
-    { key: "notifications", label: "Notifications", icon: Bell, to: "/admin-dashboard/notifications" },
-    { key: "profile", label: "Profile", icon: UserCircle2, to: "/admin-dashboard/profile" },
-    { key: "settings", label: "Settings", icon: Settings, to: "/admin-dashboard/settings" },
-  ],
   admin: [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, to: "/admin-dashboard", end: true },
     { key: "users", label: "User Management", icon: UserCog, to: "/admin-dashboard/users" },
     { key: "courses", label: "Courses", icon: BookOpen, to: "/admin-dashboard/courses" },
     { key: "bookings", label: "Bookings", icon: CalendarCheck2, to: "/admin-dashboard/bookings" },
+    { key: "incidents", label: "Incidents", icon: Wrench, to: "/admin-dashboard/incidents" },
     { key: "resources", label: "Resources", icon: Building2, to: "/admin-dashboard/resources" },
     { key: "reports", label: "Reports", icon: BarChart3, to: "/admin-dashboard/reports" },
     { key: "notifications", label: "Notifications", icon: Bell, to: "/admin-dashboard/notifications" },

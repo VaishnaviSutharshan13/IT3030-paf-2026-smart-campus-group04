@@ -10,4 +10,6 @@ public interface NotificationService {
     NotificationResponse markRead(Long notificationId, Long recipientUserId);
 
     void markAllRead(Long recipientUserId);
+
+    void createNotification(Long recipientUserId, Long actorUserId, String typeCode, String title, String message);
 }

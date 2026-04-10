@@ -1,15 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useToast } from "../../../shared/components/feedback/ToastProvider";
 import { createUser, deleteUser, getUsers, updateUser } from "../services/adminApi";
-import { useAuth } from "../../auth/context/AuthContext";
 
-const roles = ["super_admin", "admin", "lecturer", "student", "technician"];
+const roles = ["admin", "lecturer", "student", "technician"];
 const registerableRoles = ["student", "lecturer", "technician"];
 const initial = { name: "", email: "", password: "", role: "student" };
 
 export default function AdminUsersPage() {
   const toast = useToast();
-  const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(initial);
@@ -18,10 +16,7 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState("");
 
   const hasData = useMemo(() => users.length > 0, [users.length]);
-  const currentRole = String(user?.role || "");
-  const isSuperAdmin = currentRole === "super_admin";
-
-  const allowedCreateRoles = isSuperAdmin ? roles : registerableRoles;
+  const allowedCreateRoles = registerableRoles;
 
   async function loadUsers(filters = {}) {
     setLoading(true);
@@ -94,8 +89,7 @@ export default function AdminUsersPage() {
   }
 
   function canManageRow(rowRole) {
-    if (isSuperAdmin) return true;
-    return !["admin", "super_admin"].includes(rowRole);
+    return rowRole !== "admin";
   }
 
   return (

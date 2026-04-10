@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getBookings, updateBooking } from "../../bookings/services/bookingApi";
+import { approveBooking, getBookings, rejectBooking } from "../../bookings/services/bookingApi";
 import { useToast } from "../../../shared/components/feedback/ToastProvider";
 
 function normalizeStatus(status) {
@@ -25,7 +25,7 @@ export default function AdminBookingsPage() {
     setLoading(true);
     try {
       const bookingRows = await getBookings(true);
-      setBookings((bookingRows || []).filter((row) => row.user?.role === "lecturer"));
+      setBookings(bookingRows || []);
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -37,7 +37,7 @@ export default function AdminBookingsPage() {
     loadData();
   }, []);
 
-  async function onUpdate(bookingId, payload, successMessage) {
+  async function onUpdate(bookingId, action, successMessage) {
     const booking = bookings.find((item) => String(item._id || item.id) === String(bookingId));
     const currentStatus = normalizeStatus(booking?.status);
     if (currentStatus !== "PENDING") {
@@ -46,12 +46,14 @@ export default function AdminBookingsPage() {
 
     setActionLoadingById((prev) => ({ ...prev, [bookingId]: true }));
     try {
-      const updated = await updateBooking(bookingId, payload);
+      const updated = action === "approve"
+        ? await approveBooking(bookingId)
+        : await rejectBooking(bookingId, "Rejected by administrator");
 
       setBookings((prev) =>
         prev.map((item) =>
           String(item._id || item.id) === String(bookingId)
-            ? { ...item, ...updated, status: updated?.status || payload.status }
+            ? { ...item, ...updated, status: updated?.status || item.status }
             : item
         )
       );
@@ -99,7 +101,7 @@ export default function AdminBookingsPage() {
                   type="button"
                   className="btn-secondary min-w-28"
                   disabled={Boolean(actionLoadingById[booking._id || booking.id])}
-                  onClick={() => onUpdate(booking._id || booking.id, { status: "Approved" }, "Booking Approved Successfully")}
+                  onClick={() => onUpdate(booking._id || booking.id, "approve", "Booking Approved Successfully")}
                 >
                   {actionLoadingById[booking._id || booking.id] ? "Approving..." : "Approve"}
                 </button>
@@ -107,7 +109,7 @@ export default function AdminBookingsPage() {
                   type="button"
                   className="btn-secondary min-w-28"
                   disabled={Boolean(actionLoadingById[booking._id || booking.id])}
-                  onClick={() => onUpdate(booking._id || booking.id, { status: "Rejected" }, "Booking Rejected Successfully")}
+                  onClick={() => onUpdate(booking._id || booking.id, "reject", "Booking Rejected Successfully")}
                 >
                   {actionLoadingById[booking._id || booking.id] ? "Updating..." : "Reject"}
                 </button>

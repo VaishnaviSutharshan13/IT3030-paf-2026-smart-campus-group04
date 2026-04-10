@@ -15,3 +15,15 @@ export function updateTicket(id, payload) {
 export function deleteTicket(id) {
   return apiFetch(`/tickets/${id}`, { method: "DELETE" });
 }
+
+export function startTicketProgress(id) {
+  return apiFetch(`/tickets/${id}/start-progress`, { method: "PUT" });
+}
+
+export function resolveTicket(id) {
+  return apiFetch(`/tickets/${id}/resolve`, { method: "PUT" });
+}
+
+export function closeTicket(id) {
+  return apiFetch(`/tickets/${id}/close`, { method: "PUT" });
+}

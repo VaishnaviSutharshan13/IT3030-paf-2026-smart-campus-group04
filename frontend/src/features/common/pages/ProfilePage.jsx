@@ -4,7 +4,6 @@ import { useAuth } from "../../auth/context/AuthContext";
 import { getMyProfile, updateMyProfile, updateMySettings } from "../../user/services/profileApi";
 
 const roleColors = {
-  super_admin: "bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200",
   admin: "bg-amber-100 text-amber-700 border-amber-200",
   lecturer: "bg-sky-100 text-sky-700 border-sky-200",
   student: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -32,7 +31,7 @@ export default function ProfilePage() {
   const [initialEmail, setInitialEmail] = useState("");
 
   const roleClass = useMemo(() => roleColors[form.role] || roleColors.student, [form.role]);
-  const isAdmin = form.role === "admin" || form.role === "super_admin";
+  const isAdmin = form.role === "admin";
   const avatarSrc =
     form.profileImageUrl ||
     "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=320&q=80";

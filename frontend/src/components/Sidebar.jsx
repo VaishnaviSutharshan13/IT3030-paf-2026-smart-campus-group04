@@ -84,6 +84,7 @@ export default function Sidebar({ role }) {
             className={({ isActive }) =>
               [
                 "nav-ripple group relative flex items-center gap-3 overflow-hidden rounded-xl border-l-4 px-3 py-2.5 text-sm transition-all duration-300",
+                "sidebar-nav-link",
                 collapsed ? "justify-center" : "",
                 isActive
                   ? "border-l-emerald-300 bg-emerald-100/90 text-[#0B3D2E] shadow-lg shadow-emerald-900/15"

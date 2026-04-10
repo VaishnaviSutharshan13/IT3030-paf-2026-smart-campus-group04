@@ -32,6 +32,7 @@ public class JwtService {
         Date expiry = new Date(now.getTime() + expirationMs);
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
+            .map(authority -> authority != null && authority.startsWith("ROLE_") ? authority : "ROLE_" + authority)
                 .toList();
 
         return Jwts.builder()

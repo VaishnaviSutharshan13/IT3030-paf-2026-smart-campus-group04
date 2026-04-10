@@ -26,7 +26,8 @@ public class AppUserPrincipal implements UserDetails {
         this.active = user.isActive();
         this.authorities = user.getRoles().stream()
                 .map(Role::getCode)
-                .map(code -> new SimpleGrantedAuthority("ROLE_" + code))
+            .map(code -> code != null && code.startsWith("ROLE_") ? code : "ROLE_" + code)
+            .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toSet());
     }
 

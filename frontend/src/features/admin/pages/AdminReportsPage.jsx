@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { getSystemStats } from "../services/adminApi";
+import { getReports } from "../services/adminApi";
 
 export default function AdminReportsPage() {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    getSystemStats().then(setStats).catch((err) => setError(err.message));
+    getReports().then(setStats).catch((err) => setError(err.message));
   }, []);
 
   if (error) {

@@ -8,7 +8,6 @@ import useAuthRedirect from "../hooks/useAuthRedirect";
 import { useToast } from "../../../shared/components/feedback/ToastProvider";
 
 const roleHome = {
-  super_admin: "/admin-dashboard",
   student: "/student-dashboard",
   lecturer: "/lecturer-dashboard",
   admin: "/admin-dashboard",
@@ -68,7 +67,7 @@ export default function LoginPage() {
       const auth = await loginWithEmail(form);
       const user = login(auth);
       toast.success(auth.message || "Login successful.");
-      navigate(redirectPath ?? roleHome[user.role], { replace: true });
+      navigate(redirectPath ?? roleHome[user.role] ?? "/admin-dashboard", { replace: true });
     } catch (error) {
       const message = error.message || "Unable to log in with provided credentials.";
       setApiError(message);

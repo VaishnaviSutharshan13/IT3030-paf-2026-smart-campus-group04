@@ -7,7 +7,6 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../../../shared/components/feedback/ToastProvider";
 
 const roleHome = {
-  super_admin: "/admin-dashboard",
   student: "/student-dashboard",
   lecturer: "/lecturer-dashboard",
   admin: "/admin-dashboard",
@@ -84,7 +83,7 @@ export default function RegisterPage() {
       const user = login(auth);
       const successMessage = auth.message || "Registration successful.";
       toast.success(successMessage);
-      navigate(roleHome[user.role], { replace: true });
+      navigate(roleHome[user.role] ?? "/admin-dashboard", { replace: true });
     } catch (error) {
       const cleanError = error.message || "Registration failed. Please verify your details.";
       setApiError(cleanError);

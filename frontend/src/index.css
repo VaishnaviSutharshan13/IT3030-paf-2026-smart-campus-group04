@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -14,10 +14,72 @@
 
   body {
     @apply font-sans text-slate-800 antialiased;
+    font-family: "Inter", "Poppins", sans-serif;
+    line-height: 1.5;
+    letter-spacing: 0.3px;
+    color: #1a1a1a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     background:
-      radial-gradient(circle at 12% 8%, rgba(15, 157, 88, 0.16), transparent 30%),
-      radial-gradient(circle at 86% 84%, rgba(52, 211, 153, 0.24), transparent 34%),
-      linear-gradient(160deg, #f8fffb 0%, #f0fdf4 52%, #ecfdf5 100%);
+      radial-gradient(circle at 8% 10%, rgba(34, 197, 94, 0.2), transparent 30%),
+      radial-gradient(circle at 92% 15%, rgba(16, 185, 129, 0.16), transparent 34%),
+      radial-gradient(circle at 84% 88%, rgba(45, 212, 191, 0.16), transparent 34%),
+      linear-gradient(145deg, #f8fafc 0%, #ecfeff 45%, #f0fdf4 100%);
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    color: #1a1a1a;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+    letter-spacing: 0.3px;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1a1a1a;
+  }
+
+  small {
+    font-size: 13px;
+    color: #555;
+    letter-spacing: 0.3px;
+  }
+
+  ::placeholder {
+    color: #9aa3af;
+    opacity: 1;
+    font-weight: 400;
   }
 
   body.dark-mode,
@@ -33,19 +95,161 @@
 
 @layer components {
   .panel {
-    @apply rounded-2xl border border-emerald-100 bg-white shadow-soft;
+    @apply rounded-2xl border border-white/60 bg-white/70 shadow-soft;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  }
+
+  .dashboard-glass-card {
+    @apply rounded-2xl border border-white/60 bg-white/70 shadow-soft;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 22px 56px rgba(15, 23, 42, 0.11);
+  }
+
+  .dashboard-icon-wrap {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/60 bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-md;
   }
 
   .btn-primary {
-    @apply inline-flex h-10 w-auto justify-self-start items-center justify-center rounded-lg bg-campus-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:scale-[1.02] hover:bg-campus-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-70;
+    @apply inline-flex h-11 w-auto justify-self-start items-center justify-center rounded-[10px] px-4 py-2.5 text-[15px] font-semibold text-white shadow-md transition duration-200 hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-70;
+    background: linear-gradient(135deg, #10b981 0%, #14b8a6 55%, #0ea5a3 100%);
   }
 
   .btn-secondary {
-    @apply inline-flex h-10 w-auto justify-self-start items-center justify-center rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-campus-700 shadow-sm transition duration-200 hover:scale-[1.02] hover:bg-emerald-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-400;
+    @apply inline-flex h-11 w-auto justify-self-start items-center justify-center rounded-[10px] border border-white/70 bg-white/70 px-4 py-2.5 text-[15px] font-semibold text-slate-700 shadow-sm transition duration-200 hover:scale-[1.02] hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-400;
   }
 
   .input-field {
-    @apply w-full rounded-xl border border-emerald-100 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-campus-400 focus:ring-4 focus:ring-emerald-100;
+    @apply mb-4 w-full rounded-[10px] border bg-white px-3 py-2.5 text-[16px] font-medium text-[#222] outline-none transition;
+    min-height: 44px;
+    border-width: 1.5px;
+    border-color: #d1d5db;
+    transition: all 0.2s ease;
+  }
+
+  .input-field:focus {
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  }
+
+  .input-field::placeholder {
+    color: #9aa3af;
+    font-weight: 400;
+  }
+
+  form .input-field:last-child {
+    margin-bottom: 0;
+  }
+
+  .booking-modal-panel {
+    border-radius: 16px;
+    box-shadow: 0 20px 52px rgba(15, 23, 42, 0.22);
+  }
+
+  .booking-form-modal label {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a1a1a;
+  }
+
+  .booking-form-modal .booking-field {
+    margin-bottom: 2px;
+  }
+
+  .booking-form-modal .input-field {
+    margin-bottom: 0;
+  }
+
+  .booking-form-modal select.input-field {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #fff;
+    color: #222;
+    padding: 10px 42px 10px 12px;
+    min-height: 44px;
+    border: 1.5px solid #ccc;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+  }
+
+  .booking-form-modal select.input-field:focus,
+  .booking-form-modal input.input-field:focus,
+  .booking-form-modal textarea.input-field:focus {
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  }
+
+  .booking-action-button,
+  .booking-submit-button {
+    min-height: 44px;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .booking-submit-button:hover {
+    background: linear-gradient(135deg, #0f9f59 0%, #0f9488 55%, #0b8f86 100%);
+  }
+
+  .booking-form-modal .text-slate-500,
+  .booking-form-modal .text-slate-600 {
+    color: #555 !important;
+  }
+
+  .sidebar-nav-link {
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.3px;
+  }
+
+  .text-slate-800,
+  .text-slate-700 {
+    color: #1a1a1a !important;
+  }
+
+  .text-slate-600,
+  .text-slate-500,
+  .text-slate-400 {
+    color: #555 !important;
+  }
+
+  .text-sm {
+    font-size: 15px !important;
+    line-height: 1.5;
+    letter-spacing: 0.3px;
+  }
+
+  .text-xs {
+    font-size: 13px !important;
+    line-height: 1.45;
+    letter-spacing: 0.3px;
+  }
+
+  h3.text-base {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px;
+  }
+
+  .dashboard-hero {
+    @apply rounded-3xl border border-white/60 px-5 py-5;
+    background:
+      radial-gradient(circle at 18% 8%, rgba(16, 185, 129, 0.22), transparent 36%),
+      radial-gradient(circle at 84% 82%, rgba(45, 212, 191, 0.24), transparent 34%),
+      linear-gradient(130deg, rgba(255, 255, 255, 0.78) 0%, rgba(240, 253, 250, 0.8) 100%);
+  }
+
+  .chart-bar {
+    @apply relative h-2 overflow-hidden rounded-full bg-slate-200/80;
+  }
+
+  .chart-bar-fill {
+    @apply h-2 rounded-full;
+    background: linear-gradient(135deg, #10b981 0%, #0ea5a3 100%);
   }
 
   .nav-ripple::after {
