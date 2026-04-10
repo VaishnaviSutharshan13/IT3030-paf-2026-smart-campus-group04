@@ -30,5 +30,5 @@ export function deleteUser(id) {
 }
 
 export function getSystemStats() {
-  return apiFetch("/admin/stats");
+  return apiFetch("/admin/overview");
 }
