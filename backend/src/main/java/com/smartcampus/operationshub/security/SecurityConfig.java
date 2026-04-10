@@ -3,7 +3,9 @@ package com.smartcampus.operationshub.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -35,7 +37,7 @@ public class SecurityConfig {
             JwtAuthenticationFilter jwtAuthenticationFilter,
             OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
             UserDetailsService userDetailsService,
-            @Value("${app.cors.allowed-origin:http://localhost:5173}") String corsOrigin
+            @Value("${app.cors.allowed-origin:http://localhost:5173,http://127.0.0.1:5173,http://localhost:*,http://127.0.0.1:*}") String corsOrigin
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
@@ -79,7 +81,11 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(corsOrigin));
+        List<String> allowedOriginPatterns = Arrays.stream(corsOrigin.split(","))
+            .map(String::trim)
+            .filter(value -> !value.isEmpty())
+            .collect(Collectors.toList());
+        config.setAllowedOriginPatterns(allowedOriginPatterns);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(false);

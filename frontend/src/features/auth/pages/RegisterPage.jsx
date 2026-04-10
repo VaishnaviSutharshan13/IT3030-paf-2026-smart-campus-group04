@@ -21,17 +21,16 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
   const [form, setForm] = useState({
-    name: "",
+    fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "student",
   });
   const [errors, setErrors] = useState({});
 
   const canSubmit = useMemo(
     () =>
-      [form.name, form.email, form.password, form.confirmPassword]
+      [form.fullName, form.email, form.password, form.confirmPassword]
         .every((value) => String(value).trim().length > 0),
     [form]
   );
@@ -41,8 +40,8 @@ export default function RegisterPage() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
 
-    if (values.name.trim().length < 3) {
-      nextErrors.name = "Name must contain at least 3 characters.";
+    if (values.fullName.trim().length < 3) {
+      nextErrors.fullName = "Name must contain at least 3 characters.";
     }
 
     if (!emailRegex.test(values.email)) {
@@ -110,12 +109,12 @@ export default function RegisterPage() {
       <form className="grid gap-4" onSubmit={onSubmit} noValidate>
         <AuthField
           id="register-name"
-          name="name"
+          name="fullName"
           label="Full Name"
-          value={form.name}
+          value={form.fullName}
           onChange={onChange}
           placeholder="Jane Doe"
-          error={errors.name}
+          error={errors.fullName}
           autoComplete="name"
         />
         <AuthField
@@ -151,23 +150,6 @@ export default function RegisterPage() {
           error={errors.confirmPassword}
           autoComplete="new-password"
         />
-
-        <div className="grid gap-1.5">
-          <label htmlFor="register-role" className="text-sm font-medium text-slate-700">
-            Role
-          </label>
-          <select
-            id="register-role"
-            name="role"
-            className="w-full rounded-2xl border border-emerald-100 bg-white/85 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-campus-400 focus:ring-4 focus:ring-emerald-100"
-            value={form.role}
-            onChange={onChange}
-          >
-            <option value="student">Student</option>
-            <option value="lecturer">Lecturer</option>
-            <option value="technician">Technician</option>
-          </select>
-        </div>
 
         {apiError ? <p className="text-sm text-rose-600" role="alert">{apiError}</p> : null}
 

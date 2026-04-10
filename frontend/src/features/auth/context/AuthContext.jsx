@@ -6,6 +6,47 @@ const AUTH_STORAGE_KEY = "smart-campus-auth";
 
 const AuthContext = createContext(null);
 
+function normalizeRole(role) {
+  const value = String(role || "").trim().toUpperCase();
+  if (value === "SUPER_ADMIN") return "super_admin";
+  if (value === "ADMIN") return "admin";
+  if (value === "LECTURER") return "lecturer";
+  if (value === "TECHNICIAN") return "technician";
+  if (value === "STUDENT" || value === "USER") return "student";
+  return null;
+}
+
+function resolvePrimaryRole(roles) {
+  const list = Array.isArray(roles) ? roles : [];
+  return (
+    list.map(normalizeRole).find(Boolean) ||
+    "student"
+  );
+}
+
+function mapAuthResponseToUser(authResponse) {
+  return {
+    id: authResponse?.userId || null,
+    name: authResponse?.fullName || "Campus User",
+    email: authResponse?.email || "user@campus.edu",
+    role: resolvePrimaryRole(authResponse?.roles),
+    roles: Array.isArray(authResponse?.roles) ? authResponse.roles : [],
+    status: "active",
+  };
+}
+
+function mapProfileToUser(profile, previousUser) {
+  return {
+    ...(previousUser || {}),
+    id: profile?.id ?? previousUser?.id ?? null,
+    name: profile?.fullName || previousUser?.name || "Campus User",
+    email: profile?.email || previousUser?.email || "user@campus.edu",
+    role: resolvePrimaryRole(profile?.roles || previousUser?.roles),
+    roles: Array.isArray(profile?.roles) ? profile.roles : (previousUser?.roles || []),
+    status: previousUser?.status || "active",
+  };
+}
+
 function readPersistedAuth() {
   const raw = localStorage.getItem(AUTH_STORAGE_KEY);
   if (!raw) {
@@ -39,8 +80,8 @@ export function AuthProvider({ children }) {
       }
 
       try {
-        const profile = await apiFetch("/user/profile");
-        setState((prev) => ({ ...prev, user: { ...prev.user, ...profile } }));
+        const profile = await apiFetch("/auth/me");
+        setState((prev) => ({ ...prev, user: mapProfileToUser(profile, prev.user) }));
       } catch {
         localStorage.removeItem(AUTH_STORAGE_KEY);
         clearToken();
@@ -58,14 +99,7 @@ export function AuthProvider({ children }) {
       saveToken(authResponse.token);
     }
 
-    const fallbackName = authResponse?.user?.email?.split("@")[0] || "Campus User";
-    const user = {
-      id: authResponse?.user?.id || null,
-      name: authResponse?.user?.name || fallbackName,
-      email: authResponse?.user?.email || "user@campus.edu",
-      role: authResponse?.user?.role || "student",
-      status: authResponse?.user?.status || "active",
-    };
+    const user = mapAuthResponseToUser(authResponse);
 
     setState({ isAuthenticated: true, user });
     return user;
