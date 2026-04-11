@@ -3,7 +3,59 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <title>Smart Campus Operations Hub</title>
+    <script>
+      (function () {
+        const methods = ["warn", "error", "log", "info", "debug", "trace"];
+
+        function toText(value) {
+          if (typeof value === "string") return value;
+          if (value && typeof value.message === "string") return value.message;
+          try {
+            return JSON.stringify(value);
+          } catch {
+            return String(value || "");
+          }
+        }
+
+        function isComponentsDeprecation(text) {
+          const normalized = String(text || "")
+            .toLowerCase()
+            .replace(/%c/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+          return /components?\W*object/.test(normalized)
+            && normalized.includes("deprecated")
+            && (normalized.includes("soon be removed") || normalized.includes("will be removed"));
+        }
+
+        const shouldSuppress = function (args) {
+          try {
+            const text = Array.prototype.map
+              .call(args, function (value) {
+                return toText(value);
+              })
+              .join(" ");
+
+            return isComponentsDeprecation(text);
+          } catch {
+            return false;
+          }
+        };
+
+        methods.forEach(function (method) {
+          const original = console[method] && console[method].bind(console);
+          if (!original) return;
+          console[method] = function () {
+            if (shouldSuppress(arguments)) return;
+            original.apply(console, arguments);
+          };
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

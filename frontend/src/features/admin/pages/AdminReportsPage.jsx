@@ -21,19 +21,27 @@ export default function AdminReportsPage() {
     <section className="panel p-5">
       <h2 className="text-lg font-semibold text-slate-800">Reports</h2>
       <div className="mt-4 grid gap-3 md:grid-cols-3">
-        <div className="rounded-xl border border-emerald-100 p-3"><p className="text-xs uppercase text-slate-500">Bookings</p><p className="mt-1 text-2xl font-semibold text-campus-700">{stats.totalBookings || 0}</p></div>
-        <div className="rounded-xl border border-emerald-100 p-3"><p className="text-xs uppercase text-slate-500">Tickets</p><p className="mt-1 text-2xl font-semibold text-campus-700">{stats.totalTickets || 0}</p></div>
-        <div className="rounded-xl border border-emerald-100 p-3"><p className="text-xs uppercase text-slate-500">Facilities</p><p className="mt-1 text-2xl font-semibold text-campus-700">{stats.totalFacilities || 0}</p></div>
+        <div className="rounded-xl border border-emerald-100 p-3"><p className="text-xs uppercase text-slate-500">Total Bookings</p><p className="mt-1 text-2xl font-semibold text-campus-700">{stats?.totalBookings || 0}</p></div>
+        <div className="rounded-xl border border-emerald-100 p-3"><p className="text-xs uppercase text-slate-500">Approved Bookings</p><p className="mt-1 text-2xl font-semibold text-campus-700">{stats?.approvedBookings || 0}</p></div>
+        <div className="rounded-xl border border-emerald-100 p-3"><p className="text-xs uppercase text-slate-500">Rejected Bookings</p><p className="mt-1 text-2xl font-semibold text-campus-700">{stats?.rejectedBookings || 0}</p></div>
       </div>
-      {(stats.recentUsers || []).length === 0 ? <p className="mt-4 text-sm text-slate-500">No data available.</p> : null}
-      <div className="mt-4 space-y-2">
-        {(stats.recentUsers || []).map((user) => (
-          <div key={user.id} className="rounded-lg border border-emerald-100 p-3">
-            <p className="text-sm font-medium text-slate-800">{user.name}</p>
-            <p className="text-xs text-slate-500">{user.email} • {String(user.role || "").toUpperCase()}</p>
-          </div>
-        ))}
+
+      <div className="mt-3 grid gap-3 md:grid-cols-3">
+        <div className="rounded-xl border border-amber-100 p-3">
+          <p className="text-xs uppercase text-slate-500">Total Incidents</p>
+          <p className="mt-1 text-sm text-slate-700">Count: <span className="font-semibold">{stats?.totalIncidents || 0}</span></p>
+        </div>
+        <div className="rounded-xl border border-emerald-100 p-3">
+          <p className="text-xs uppercase text-slate-500">Resolved Incidents</p>
+          <p className="mt-1 text-sm text-slate-700">Count: <span className="font-semibold">{stats?.resolvedIncidents || 0}</span></p>
+        </div>
+        <div className="rounded-xl border border-emerald-100 p-3">
+          <p className="text-xs uppercase text-slate-500">Technicians Workload</p>
+          <p className="mt-1 text-sm text-slate-700">Open work: <span className="font-semibold">{Math.max(0, Number(stats?.totalIncidents || 0) - Number(stats?.resolvedIncidents || 0))}</span></p>
+        </div>
       </div>
+
+      <p className="mt-4 text-xs text-slate-500">Summary updates automatically from live database counts.</p>
     </section>
   );
 }

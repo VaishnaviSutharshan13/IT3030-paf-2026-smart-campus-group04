@@ -17,9 +17,9 @@ function mapRoleFromBackend(roles) {
 
   const normalized = roleList.map((role) => String(role || "").toUpperCase());
   if (normalized.some((role) => role.includes("ADMIN"))) return "admin";
-  if (normalized.includes("LECTURER")) return "lecturer";
-  if (normalized.includes("TECHNICIAN")) return "technician";
-  if (normalized.includes("STUDENT") || normalized.includes("USER")) return "student";
+  if (normalized.some((role) => role.includes("LECTURER"))) return "lecturer";
+  if (normalized.some((role) => role.includes("TECHNICIAN"))) return "technician";
+  if (normalized.some((role) => role.includes("STUDENT") || role.includes("USER"))) return "student";
   return "student";
 }
 
@@ -88,5 +88,20 @@ export function getSystemStats() {
 }
 
 export function getReports() {
-  return apiFetch("/reports").catch(normalizeAdminApiError);
+  return apiFetch("/reports")
+    .then((payload) => payload?.data || payload || {})
+    .catch(async (error) => {
+      const message = String(error?.message || "");
+      const isNotFound = message.includes("404") || message.toLowerCase().includes("not found");
+      if (!isNotFound) {
+        return Promise.reject(normalizeAdminApiError(error));
+      }
+
+      try {
+        const payload = await apiFetch("/reports/summary");
+        return payload?.data || payload || {};
+      } catch (fallbackError) {
+        return Promise.reject(normalizeAdminApiError(fallbackError));
+      }
+    });
 }

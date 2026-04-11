@@ -10,6 +10,12 @@ import org.springframework.data.repository.query.Param;
 
 public interface IncidentRepository extends JpaRepository<Incident, Long> {
 
+    List<Incident> findByAssignedToOrderByCreatedAtDesc(Long assignedTo);
+
+  long countByStatusIn(java.util.Collection<IncidentStatus> statuses);
+
+  long countByStatus(IncidentStatus status);
+
     @Query("""
         select i from Incident i
         where (:reporterId is null or i.reportedBy = :reporterId)

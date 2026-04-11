@@ -1,9 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap");
-
 .saas-auth-page {
   min-height: 100vh;
   background: linear-gradient(130deg, #eef2ff 0%, #f8fafc 100%);
-  font-family: "Inter", "Poppins", sans-serif;
+  font-family: "Segoe UI", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
   padding: 18px;
 }
 
@@ -22,7 +20,10 @@
 .saas-auth-visual {
   position: relative;
   min-height: 560px;
-  background-image: url("https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=80");
+  background:
+    radial-gradient(circle at 15% 20%, rgba(16, 185, 129, 0.45), transparent 38%),
+    radial-gradient(circle at 82% 75%, rgba(59, 130, 246, 0.35), transparent 40%),
+    linear-gradient(160deg, #0b3b33 0%, #0f766e 45%, #1d4ed8 100%);
   background-size: cover;
   background-position: center;
   display: grid;
@@ -46,7 +47,7 @@
 .saas-auth-type {
   margin: 0;
   color: #ffffff;
-  font-family: "Poppins", "Inter", sans-serif;
+  font-family: "Segoe UI", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
   font-weight: 600;
   font-size: clamp(1.15rem, 2vw, 1.5rem);
   letter-spacing: 0.015em;
@@ -93,7 +94,7 @@
 .saas-auth-header h1 {
   margin: 0;
   color: #0f172a;
-  font-family: "Poppins", "Inter", sans-serif;
+  font-family: "Segoe UI", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
   font-size: 1.72rem;
   font-weight: 700;
 }

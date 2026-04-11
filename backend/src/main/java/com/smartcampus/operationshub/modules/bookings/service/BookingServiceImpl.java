@@ -6,6 +6,7 @@ import com.smartcampus.operationshub.common.exception.ResourceNotFoundException;
 import com.smartcampus.operationshub.modules.bookings.dto.BookingResponse;
 import com.smartcampus.operationshub.modules.bookings.dto.CreateBookingRequest;
 import com.smartcampus.operationshub.modules.bookings.dto.UpdateBookingRequest;
+import com.smartcampus.operationshub.modules.bookings.dto.UpdateBookingStatusRequest;
 import com.smartcampus.operationshub.modules.bookings.entity.Booking;
 import com.smartcampus.operationshub.modules.bookings.entity.BookingStatus;
 import com.smartcampus.operationshub.modules.bookings.repository.BookingRepository;
@@ -83,6 +84,21 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public BookingResponse updateStatus(Long bookingId, UpdateBookingStatusRequest request, Long adminUserId) {
+        String normalized = request.getStatus() == null ? "" : request.getStatus().trim().toUpperCase();
+        if (!"APPROVED".equals(normalized) && !"REJECTED".equals(normalized)) {
+            throw new BusinessRuleException("Invalid status. Allowed values: Approved, Rejected");
+        }
+
+        if ("APPROVED".equals(normalized)) {
+            return approveBooking(bookingId, adminUserId);
+        }
+
+        return rejectBooking(bookingId, request.getReason(), adminUserId);
+    }
+
+    @Override
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public BookingResponse cancelBooking(Long bookingId, Long actorUserId, boolean isAdmin) {
         Booking booking = loadBooking(bookingId);
@@ -129,8 +145,12 @@ public class BookingServiceImpl implements BookingService {
             throw new BusinessRuleException("Only requester or admin can delete this booking");
         }
 
-        if (booking.getStatus() == BookingStatus.APPROVED) {
-            throw new BusinessRuleException("Approved bookings cannot be deleted. Cancel instead.");
+        if (isAdmin && booking.getStatus() != BookingStatus.APPROVED) {
+            throw new BusinessRuleException("Admin can delete only approved bookings.");
+        }
+
+        if (!isAdmin && booking.getStatus() == BookingStatus.APPROVED) {
+            throw new BusinessRuleException("Approved bookings cannot be deleted.");
         }
 
         bookingRepository.delete(booking);

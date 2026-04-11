@@ -58,6 +58,12 @@ public class Incident {
     @PrePersist
     void onCreate() {
         LocalDateTime now = LocalDateTime.now();
+        if (status == null) {
+            status = IncidentStatus.PENDING;
+        }
+        if (technicianNotes == null) {
+            technicianNotes = "";
+        }
         createdAt = now;
         updatedAt = now;
     }

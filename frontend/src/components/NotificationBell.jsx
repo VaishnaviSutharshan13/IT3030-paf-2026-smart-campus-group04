@@ -44,7 +44,7 @@ export default function NotificationBell({ role }) {
         getNotifications({ page: 1, limit: 7 }),
       ]);
       setUnread(Number(summary?.unread || 0));
-      setItems(list?.items || []);
+      setItems(Array.isArray(list) ? list : []);
     } catch {
       // Silent in navbar polling.
     }
@@ -72,7 +72,7 @@ export default function NotificationBell({ role }) {
   }, [open]);
 
   async function onItemClick(item) {
-    if (!item.is_read) {
+    if (!item?.read) {
       try {
         await markNotificationRead(item.id);
       } catch {
@@ -111,7 +111,7 @@ export default function NotificationBell({ role }) {
   }
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative z-[90]">
       <button
         type="button"
         className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-200 bg-white text-campus-700 transition hover:bg-emerald-50"
@@ -127,7 +127,7 @@ export default function NotificationBell({ role }) {
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-[340px] rounded-2xl border border-emerald-100 bg-white p-3 shadow-[0_18px_40px_rgba(15,23,42,0.14)]">
+        <div className="absolute right-0 z-[100] mt-2 w-[340px] rounded-2xl border border-emerald-100 bg-white p-3 shadow-[0_18px_40px_rgba(15,23,42,0.14)]">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-800">Notifications</h3>
             <span className="text-xs text-slate-500">{unread} unread</span>
@@ -141,11 +141,11 @@ export default function NotificationBell({ role }) {
                 key={item.id}
                 type="button"
                 onClick={() => onItemClick(item)}
-                className={`w-full rounded-xl border px-3 py-2 text-left transition hover:border-emerald-200 hover:bg-emerald-50 ${item.is_read ? "border-emerald-100 bg-white" : "border-emerald-200 bg-emerald-50/70"}`}
+                className={`w-full rounded-xl border px-3 py-2 text-left transition hover:border-emerald-200 hover:bg-emerald-50 ${item.read ? "border-emerald-100 bg-white" : "border-emerald-200 bg-emerald-50/70"}`}
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-campus-700">{item.title}</p>
                 <p className="mt-0.5 text-sm text-slate-700">{item.message}</p>
-                <p className="mt-1 text-[11px] text-slate-500">{getTimeAgo(item.created_at)}</p>
+                <p className="mt-1 text-[11px] text-slate-500">{getTimeAgo(item.createdAt)}</p>
               </button>
             ))}
           </div>

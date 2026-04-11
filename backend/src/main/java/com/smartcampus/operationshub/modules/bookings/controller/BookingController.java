@@ -14,13 +14,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.DeleteMapping;
 
 @RestController
-@RequestMapping("/api/v1/bookings")
+@RequestMapping({"/api/v1/bookings", "/api/bookings"})
 public class BookingController {
 
     private final BookingService bookingService;
@@ -58,6 +59,16 @@ public class BookingController {
     ) {
         Long adminUserId = parseUserId(authentication);
         return bookingService.rejectBooking(bookingId, request.getReason(), adminUserId);
+    }
+
+    @PatchMapping("/{bookingId}/status")
+    public BookingResponse updateBookingStatus(
+            @PathVariable Long bookingId,
+            @Valid @RequestBody UpdateBookingStatusRequest request,
+            Authentication authentication
+    ) {
+        Long adminUserId = parseUserId(authentication);
+        return bookingService.updateStatus(bookingId, request, adminUserId);
     }
 
     @PutMapping("/{bookingId}/cancel")

@@ -14,7 +14,7 @@ export default function Header({ title, subtitle }) {
   }
 
   return (
-    <header className="dashboard-glass-card flex flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-5">
+    <header className="dashboard-glass-card relative z-10 overflow-visible flex flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-5">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-800">{title}</h1>
         <p className="mt-1 text-sm text-slate-500">{subtitle}</p>

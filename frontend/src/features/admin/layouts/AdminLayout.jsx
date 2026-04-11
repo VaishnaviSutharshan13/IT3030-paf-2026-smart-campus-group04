@@ -10,7 +10,7 @@ export default function AdminLayout() {
     <div className="flex min-h-screen">
       <Sidebar role={role} />
       <div className="w-full px-4 py-4 sm:px-6 lg:px-8">
-        <Navbar title="Admin Dashboard" subtitle="Manage users, courses, and system reports" />
+        <Navbar title="Admin Dashboard" subtitle="Manage users, resources, bookings, incidents and reports" />
         <main className="mt-5 space-y-5">
           <Outlet />
         </main>

@@ -38,12 +38,12 @@ export default function NotificationsPage() {
         limit,
       });
 
-      const rows = Array.isArray(response) ? response : response?.items || [];
+      const rows = Array.isArray(response) ? response : [];
       let filteredRows = rows;
       if (currentFilter === "unread") {
-        filteredRows = rows.filter((item) => !item.read);
+        filteredRows = rows.filter((item) => !item?.read);
       } else if (currentFilter === "read") {
-        filteredRows = rows.filter((item) => item.read);
+        filteredRows = rows.filter((item) => item?.read);
       }
 
       setItems(filteredRows);
@@ -166,7 +166,7 @@ export default function NotificationsPage() {
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-campus-700">{item.title}</p>
                   <p className="mt-1 text-sm text-slate-700">{item.message}</p>
-                  <p className="mt-1 text-[11px] text-slate-500">{getTimeAgo(item.createdAt)}</p>
+                  <p className="mt-1 text-[11px] text-slate-500">{getTimeAgo(item?.createdAt)}</p>
                 </div>
                 {!item.read ? (
                   <button

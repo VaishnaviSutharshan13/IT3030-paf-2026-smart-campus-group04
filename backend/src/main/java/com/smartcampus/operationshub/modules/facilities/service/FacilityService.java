@@ -9,9 +9,11 @@ import com.smartcampus.operationshub.modules.resources.entity.ResourceType;
 import com.smartcampus.operationshub.modules.resources.repository.ResourceRepository;
 import com.smartcampus.operationshub.modules.resources.repository.ResourceTypeRepository;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Service
 @Transactional
@@ -36,13 +38,11 @@ public class FacilityService {
         if (request.getName() == null || request.getName().isBlank()) {
             throw new BusinessRuleException("Name is required");
         }
-        String typeCode = toTypeCode(request.getType());
-        ResourceType type = resourceTypeRepository.findByCode(typeCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource type not found: " + typeCode));
+        ResourceType type = resolveResourceType(request.getType());
 
         Resource resource = new Resource();
         resource.setResourceTypeId(type.getId());
-        resource.setCode(generateCode(typeCode));
+        resource.setCode(generateCode(type.getCode()));
         resource.setName(request.getName().trim());
         resource.setLocation(normalizeLocation(request.getLocation()));
         resource.setCapacity(request.getCapacity() == null ? 1 : request.getCapacity());
@@ -62,9 +62,7 @@ public class FacilityService {
             resource.setName(request.getName().trim());
         }
         if (request.getType() != null && !request.getType().isBlank()) {
-            String typeCode = toTypeCode(request.getType());
-            ResourceType type = resourceTypeRepository.findByCode(typeCode)
-                    .orElseThrow(() -> new ResourceNotFoundException("Resource type not found: " + typeCode));
+            ResourceType type = resolveResourceType(request.getType());
             resource.setResourceTypeId(type.getId());
         }
         if (request.getCapacity() != null) {
@@ -84,8 +82,12 @@ public class FacilityService {
     public void deleteFacility(Long id) {
         Resource resource = resourceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Facility not found: " + id));
-        resource.setActive(false);
-        resourceRepository.save(resource);
+        try {
+            resourceRepository.delete(resource);
+            resourceRepository.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessRuleException("This resource cannot be deleted because it is referenced by existing records.");
+        }
     }
 
     private String normalizeLocation(String location) {
@@ -105,15 +107,47 @@ public class FacilityService {
         return prefix + "-" + suffix;
     }
 
-    private String toTypeCode(String type) {
-        String value = String.valueOf(type).trim().toUpperCase();
-        if (value.startsWith("LAB")) {
-            return "LAB";
+    private ResourceType resolveResourceType(String typeInput) {
+        String normalizedCode = normalizeTypeCode(typeInput);
+        return resourceTypeRepository.findByCode(normalizedCode)
+                .orElseGet(() -> {
+                    ResourceType type = new ResourceType();
+                    type.setCode(normalizedCode);
+                    type.setDisplayName(normalizeTypeDisplayName(typeInput));
+                    return resourceTypeRepository.save(type);
+                });
+    }
+
+    private String normalizeTypeCode(String rawType) {
+        String fallback = "ROOM";
+        if (rawType == null || rawType.isBlank()) {
+            return fallback;
         }
-        if (value.startsWith("EQUIP")) {
-            return "EQUIPMENT";
+
+        String cleaned = rawType.trim().toUpperCase(Locale.ROOT)
+                .replace('-', '_')
+                .replace(' ', '_')
+                .replaceAll("[^A-Z0-9_]", "");
+
+        if (cleaned.isBlank()) {
+            return fallback;
         }
-        return "ROOM";
+
+        if (cleaned.length() > 32) {
+            return cleaned.substring(0, 32);
+        }
+        return cleaned;
+    }
+
+    private String normalizeTypeDisplayName(String rawType) {
+        if (rawType == null || rawType.isBlank()) {
+            return "Room";
+        }
+        String trimmed = rawType.trim();
+        if (trimmed.length() <= 64) {
+            return trimmed;
+        }
+        return trimmed.substring(0, 64);
     }
 
     private boolean toActive(String availabilityStatus, boolean defaultValue) {
@@ -125,20 +159,14 @@ public class FacilityService {
     }
 
     private FacilityResponse toResponse(Resource resource) {
-        String typeCode = resourceTypeRepository.findById(resource.getResourceTypeId())
-                .map(ResourceType::getCode)
-                .orElse("ROOM");
-
-        String type = switch (typeCode) {
-            case "LAB" -> "Lab";
-            case "EQUIPMENT" -> "Equipment";
-            default -> "Room";
-        };
+        ResourceType type = resourceTypeRepository.findById(resource.getResourceTypeId())
+            .orElse(null);
+        String typeLabel = type != null ? type.getDisplayName() : "Room";
 
         return new FacilityResponse(
                 resource.getId(),
                 resource.getName(),
-                type,
+            typeLabel,
                 resource.getCapacity(),
                 resource.isActive() ? "Available" : "Unavailable",
                 resource.getLocation(),

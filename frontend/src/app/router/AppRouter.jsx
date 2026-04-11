@@ -3,6 +3,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import PublicOnlyRoute from "./PublicOnlyRoute";
 import RoleRouteRedirect from "./RoleRouteRedirect";
+import TechnicianLayout from "../../features/technician/layouts/TechnicianLayout";
+import TechnicianTicketsPage from "../../features/technician/pages/TechnicianTicketsPage";
 
 const LoginPage = lazy(() => import("../../features/auth/pages/LoginPage"));
 const RegisterPage = lazy(() => import("../../features/auth/pages/RegisterPage"));
@@ -13,10 +15,11 @@ const ManageCourses = lazy(() => import("../../features/lecturer/pages/ManageCou
 const UploadMaterials = lazy(() => import("../../features/lecturer/pages/UploadMaterials"));
 const ViewStudents = lazy(() => import("../../features/lecturer/pages/ViewStudents"));
 const LecturerBookingsPage = lazy(() => import("../../features/lecturer/pages/LecturerBookingsPage"));
+const LecturerIncidentsPage = lazy(() => import("../../features/lecturer/pages/LecturerIncidentsPage"));
+const LecturerResourcesPage = lazy(() => import("../../features/lecturer/pages/LecturerResourcesPage"));
 const AdminLayout = lazy(() => import("../../features/admin/layouts/AdminLayout"));
 const AdminOverview = lazy(() => import("../../features/admin/pages/AdminOverview"));
 const AdminUsersPage = lazy(() => import("../../features/admin/pages/AdminUsersPage"));
-const AdminCoursesPage = lazy(() => import("../../features/admin/pages/AdminCoursesPage"));
 const AdminBookingsPage = lazy(() => import("../../features/admin/pages/AdminBookingsPage"));
 const AdminReportsPage = lazy(() => import("../../features/admin/pages/AdminReportsPage"));
 const AdminFacilitiesPage = lazy(() => import("../../features/admin/pages/AdminFacilitiesPage"));
@@ -29,9 +32,7 @@ const StudentAssignmentsPage = lazy(() => import("../../features/student/pages/S
 const StudentStatusPage = lazy(() => import("../../features/student/pages/StudentStatusPage"));
 const StudentBookingsPage = lazy(() => import("../../features/student/pages/StudentBookingsPage"));
 const NotificationsPage = lazy(() => import("../../features/common/pages/NotificationsPage"));
-const TechnicianLayout = lazy(() => import("../../features/technician/layouts/TechnicianLayout"));
 const TechnicianOverview = lazy(() => import("../../features/technician/pages/TechnicianOverview"));
-const TechnicianTicketsPage = lazy(() => import("../../features/technician/pages/TechnicianTicketsPage"));
 const TechnicianTasksPage = lazy(() => import("../../features/technician/pages/TechnicianTasksPage"));
 const ProfilePage = lazy(() => import("../../features/common/pages/ProfilePage"));
 const SettingsPage = lazy(() => import("../../features/common/pages/SettingsPage"));
@@ -49,7 +50,7 @@ function RouteFallback() {
 
 export default function AppRouter() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
@@ -82,6 +83,8 @@ export default function AppRouter() {
               <Route path="materials" element={<UploadMaterials />} />
               <Route path="students" element={<ViewStudents />} />
               <Route path="bookings" element={<LecturerBookingsPage />} />
+              <Route path="incidents" element={<LecturerIncidentsPage />} />
+              <Route path="resources" element={<LecturerResourcesPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage title="Lecturer Settings" />} />
@@ -93,7 +96,6 @@ export default function AppRouter() {
             <Route path="/admin-dashboard" element={<AdminLayout />}>
               <Route index element={<AdminOverview />} />
               <Route path="users" element={<AdminUsersPage />} />
-              <Route path="courses" element={<AdminCoursesPage />} />
               <Route path="bookings" element={<AdminBookingsPage />} />
               <Route path="incidents" element={<AdminIncidentsPage />} />
               <Route path="facilities" element={<AdminFacilitiesPage />} />
@@ -124,6 +126,7 @@ export default function AppRouter() {
             <Route path="/materials" element={<RoleRouteRedirect section="materials" />} />
             <Route path="/students" element={<RoleRouteRedirect section="students" />} />
             <Route path="/notifications" element={<RoleRouteRedirect section="notifications" />} />
+            <Route path="incidents" element={<RoleRouteRedirect section="incidents" />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/login" replace />} />

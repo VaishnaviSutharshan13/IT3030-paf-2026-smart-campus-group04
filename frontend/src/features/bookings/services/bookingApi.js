@@ -256,12 +256,22 @@ export function getAvailableSlots(first, date) {
 }
 
 export function approveBooking(id) {
-  return apiFetch(`/bookings/${id}/approve`, { method: "PUT" });
+  return apiFetch(`/bookings/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "Approved" }),
+  });
 }
 
 export function rejectBooking(id, reason = "Rejected by admin") {
-  return apiFetch(`/bookings/${id}/reject`, {
-    method: "PUT",
-    body: JSON.stringify({ reason }),
+  return apiFetch(`/bookings/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "Rejected", reason }),
+  });
+}
+
+export function updateBookingStatus(id, status, reason = "") {
+  return apiFetch(`/bookings/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, reason }),
   });
 }

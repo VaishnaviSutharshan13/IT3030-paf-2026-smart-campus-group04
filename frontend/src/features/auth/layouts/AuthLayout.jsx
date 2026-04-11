@@ -74,11 +74,7 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
         className="relative mx-auto grid min-h-[90vh] w-full max-w-7xl overflow-hidden rounded-[30px] border border-white/15 bg-white/8 shadow-[0_20px_80px_rgba(8,15,35,0.45)] backdrop-blur-sm lg:grid-cols-2"
       >
         <aside className="relative order-1 overflow-hidden min-h-[40vh] lg:min-h-full">
-          <img
-            src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1600&q=80"
-            alt="Students in a modern smart campus workspace"
-            className="h-full w-full object-cover"
-          />
+          <div className="h-full w-full bg-[radial-gradient(circle_at_12%_18%,rgba(110,231,183,0.38),transparent_34%),radial-gradient(circle_at_84%_78%,rgba(96,165,250,0.3),transparent_36%),linear-gradient(150deg,#064e3b_0%,#0f766e_44%,#1d4ed8_100%)]" />
 
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/85 via-teal-800/75 to-blue-900/75" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_20%,rgba(255,255,255,0.2),transparent_42%)]" />

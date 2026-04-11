@@ -33,6 +33,12 @@ const rolePaths = {
     student: "/student-dashboard/notifications",
     technician: "/technician-dashboard/notifications",
   },
+  incidents: {
+    admin: "/admin-dashboard/incidents",
+    lecturer: "/lecturer-dashboard/incidents",
+    student: "/student-dashboard",
+    technician: "/technician-dashboard/tickets",
+  },
 };
 
 export default function RoleRouteRedirect({ section }) {

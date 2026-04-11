@@ -20,11 +20,29 @@ export async function apiFetch(path, options = {}) {
 
   if (!response.ok) {
     const text = await response.text();
+
+    const extractMessage = (rawText) => {
+      if (!rawText) {
+        return null;
+      }
+
+      try {
+        const parsed = JSON.parse(rawText);
+        return parsed?.message || parsed?.error || null;
+      } catch {
+        const messageMatch = rawText.match(/"message"\s*:\s*"([^"]+)"/i);
+        if (messageMatch?.[1]) {
+          return messageMatch[1];
+        }
+        return null;
+      }
+    };
+
     try {
       const parsed = JSON.parse(text);
       throw new Error(parsed.message || parsed.error || `Request failed with ${response.status}`);
     } catch {
-      throw new Error(text || `Request failed with ${response.status}`);
+      throw new Error(extractMessage(text) || `Request failed with ${response.status}`);
     }
   }
 
@@ -32,5 +50,13 @@ export async function apiFetch(path, options = {}) {
     return null;
   }
 
-  return response.json();
+  const payload = await response.json();
+  if (payload && typeof payload === "object" && Object.prototype.hasOwnProperty.call(payload, "success")) {
+    if (payload.success) {
+      return payload.data;
+    }
+    throw new Error(payload.message || "Request failed");
+  }
+
+  return payload;
 }

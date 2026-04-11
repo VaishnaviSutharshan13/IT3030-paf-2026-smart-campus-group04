@@ -1,14 +1,24 @@
-import React from "react";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Plus, CalendarClock, Bell, Wrench, Ticket } from "lucide-react";
 import { useAuth } from "../../auth/context/AuthContext";
 import { getBookings } from "../../bookings/services/bookingApi";
 import { fetchResources } from "../../resources/services/resourceService";
 import { getNotifications } from "../../notifications/services/notificationApi";
 import { listIncidents, reportIncident } from "../../incidents/services/incidentApi";
-import { createTicket, getTickets } from "../../tickets/services/ticketApi";
+import { getTickets } from "../../tickets/services/ticketApi";
 import StatusBadge from "../../../components/dashboard/StatusBadge";
 import { useToast } from "../../../shared/components/feedback/ToastProvider";
+
+function isResourceAvailable(resource) {
+  const activeFlag = resource?.active;
+  const statusValue = String(resource?.availabilityStatus || "").trim().toLowerCase();
+
+  if (statusValue) {
+    return statusValue === "available";
+  }
+
+  return Boolean(activeFlag);
+}
 
 function toLocationType(value) {
   const upper = String(value || "").trim().toUpperCase();
@@ -28,6 +38,20 @@ function parseLocationFromDescription(description = "") {
     floor: floor || "",
     roomType: roomType || "",
   };
+}
+
+function extractErrorMessage(error, fallbackMessage) {
+  const raw = String(error?.message || "").trim();
+  if (!raw) return fallbackMessage;
+  if (raw.startsWith("{") && raw.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed?.message || fallbackMessage;
+    } catch {
+      return fallbackMessage;
+    }
+  }
+  return raw;
 }
 
 function mapTicketToIncident(ticket) {
@@ -104,7 +128,7 @@ export default function Dashboard() {
           ? ticketsResult.value
           : [];
         const resources = resourcesResult.status === "fulfilled" && Array.isArray(resourcesResult.value)
-          ? resourcesResult.value
+          ? resourcesResult.value.filter(isResourceAvailable)
           : [];
         const notifications = notificationsResult.status === "fulfilled" && Array.isArray(notificationsResult.value)
           ? notificationsResult.value
@@ -140,10 +164,10 @@ export default function Dashboard() {
     const pendingBookings = bookings.filter((item) => String(item.status || "").toUpperCase() === "PENDING").length;
     const approvedBookings = bookings.filter((item) => String(item.status || "").toUpperCase() === "APPROVED").length;
 
-    const openTickets = incidents.filter((item) => String(item.status || "").toUpperCase() === "PENDING").length;
+    const openTickets = incidents.filter((item) => ["PENDING", "ASSIGNED", "IN_PROGRESS"].includes(String(item.status || "").toUpperCase())).length;
     const inProgressTickets = incidents.filter((item) => String(item.status || "").toUpperCase() === "IN_PROGRESS").length;
 
-    const activeResources = resources.filter((item) => Boolean(item.active)).length;
+    const activeResources = resources.filter((item) => isResourceAvailable(item)).length;
     const unreadNotifications = notifications.filter((item) => !item.read).length;
 
     return {
@@ -195,12 +219,11 @@ export default function Dashboard() {
     event.preventDefault();
 
     const payload = {
-      issueType: String(incident.issueType || "").trim(),
+      issueType: String(incident.issueType || "").trim().toUpperCase(),
       description: String(incident.description || "").trim(),
-      priority: String(incident.priority || "").trim(),
+      priority: String(incident.priority || "").trim().toUpperCase(),
       floor: String(incident.floor || "").trim(),
-      roomType: String(incident.roomType || "").trim(),
-      date: new Date().toISOString(),
+      roomType: String(incident.roomType || "").trim().toUpperCase(),
     };
 
     const hasInvalidUnknownLocation = /unknown/i.test(payload.floor) || /unknown/i.test(payload.roomType);
@@ -213,19 +236,9 @@ export default function Dashboard() {
 
     setSubmittingIncident(true);
     try {
-      try {
-        await reportIncident(payload);
-      } catch {
-        const fallbackDescription = `${payload.description}\nLocation: ${payload.floor} - ${payload.roomType}`;
-        await createTicket({
-          title: payload.issueType,
-          description: fallbackDescription,
-          priority: payload.priority,
-          incidentAt: payload.date,
-        });
-      }
+      await reportIncident(payload);
 
-      toast.success("✅ Issue reported successfully");
+      toast.success("Incident reported successfully");
 
       setIncident({
         roomType: "SMART_CLASSROOM",
@@ -237,8 +250,8 @@ export default function Dashboard() {
 
       const latest = await fetchIncidentsWithFallback();
       setDashboardData((prev) => ({ ...prev, incidents: Array.isArray(latest) ? latest : [] }));
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+    } catch (error) {
+      toast.error(extractErrorMessage(error, "Failed to report incident. Please try again."));
     } finally {
       setSubmittingIncident(false);
     }
@@ -271,7 +284,7 @@ export default function Dashboard() {
         </div>
         <div className="panel p-5">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.16em] text-emerald-500">Active Resources</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-emerald-500">Available Resources</p>
             <Wrench size={16} className="text-emerald-600" />
           </div>
           <p className="mt-2 text-3xl font-semibold text-campus-700">{stats.activeResources}</p>
@@ -388,6 +401,7 @@ export default function Dashboard() {
             <option value="">All Status</option>
             <option value="PENDING">Pending</option>
             <option value="ASSIGNED">Assigned</option>
+            <option value="REJECTED">Rejected</option>
             <option value="IN_PROGRESS">In Progress</option>
             <option value="RESOLVED">Resolved</option>
           </select>
@@ -413,7 +427,7 @@ export default function Dashboard() {
             <article key={row.id} className="rounded-xl border border-emerald-100 bg-white p-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-semibold text-slate-800">{String(row.locationType || "CLASSROOM").replaceAll("_", " ")} - {row.issueType}</p>
-                <StatusBadge status={row.status} />
+                <StatusBadge status={row.status} label={String(row.status || "").toUpperCase() === "RESOLVED" ? "FINISHED" : undefined} />
               </div>
               <p className="mt-1 text-xs text-slate-500">Priority: {row.priority} | {row.floor || "Location not specified"} - {String(row.locationType || "CLASSROOM").replaceAll("_", " ")}</p>
               <p className="mt-1 text-sm text-slate-600">{row.description}</p>

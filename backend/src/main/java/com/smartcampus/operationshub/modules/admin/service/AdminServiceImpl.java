@@ -17,6 +17,7 @@ import com.smartcampus.operationshub.security.RoleConstants;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -120,7 +121,14 @@ public class AdminServiceImpl implements AdminService {
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("User not found: " + userId);
         }
-        userRepository.deleteById(userId);
+        try {
+            userRepository.deleteById(userId);
+            userRepository.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw new ConflictException(
+                    "User cannot be deleted because related records still reference this account"
+            );
+        }
     }
 
     @Override

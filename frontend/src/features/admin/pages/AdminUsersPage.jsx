@@ -58,16 +58,6 @@ export default function AdminUsersPage() {
     }
   }
 
-  async function handleRoleUpdate(userId, role) {
-    try {
-      await updateUser(userId, { role });
-      toast.success("Role updated.");
-      loadUsers({ search, role: roleFilter, status: statusFilter });
-    } catch (error) {
-      toast.error(error.message);
-    }
-  }
-
   async function handleStatusUpdate(userId, status) {
     try {
       await updateUser(userId, { status });
@@ -133,14 +123,9 @@ export default function AdminUsersPage() {
                     <td className="px-3 py-2">{user.name}</td>
                     <td className="px-3 py-2">{user.email}</td>
                     <td className="px-3 py-2">
-                      <select
-                        className="rounded border border-emerald-200 px-2 py-1"
-                        value={user.role}
-                        disabled={!canManageRow(user.role)}
-                        onChange={(e) => handleRoleUpdate(user.id, e.target.value)}
-                      >
-                        {roles.map((role) => <option key={role} value={role}>{role}</option>)}
-                      </select>
+                      <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-campus-700">
+                        {String(user.role || "-")}
+                      </span>
                     </td>
                     <td className="px-3 py-2">
                       <select
